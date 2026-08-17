@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Overview - Regional Opticians</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('userRole');
+
+        if (!token) {
+            window.location.href = "login.html";
+        }
+        if (role !== 'admin') {
+            alert("Access Denied: Administrators only.");
+            if (role === 'clinician') window.location.href = "clinician-dashboard.html";
+            else window.location.href = "patient-dashboard.html";
+        }
+    </script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#2563eb', 
+                        'form-teal': '#0d9488', 
+                    },
+                    borderWidth: { '3': '3px' },
+                    screens: { 'max-desk': '1440px' }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { max-width: 1440px; margin: 0 auto; }
+        .tooltip { visibility: hidden; position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 10px; padding: 5px 10px; background: #1f2937; color: white; border-radius: 4px; font-size: 12px; white-space: nowrap; z-index: 50; }
+        .group:hover .tooltip { visibility: visible; }
+        .sticky-col { position: sticky; left: 0; background-color: white; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 flex h-screen overflow-hidden pb-16 md:pb-0 font-sans text-gray-800">
+
+    <aside class="hidden md:flex md:w-20 lg:w-64 bg-slate-900 text-white flex-col transition-all duration-300 border-r border-slate-800 z-20 shadow-xl">
+        <div class="p-6 text-xl font-bold border-b border-slate-800 flex items-center justify-center lg:justify-start gap-3">
+            <div class="w-8 h-8 rounded bg-primary-blue flex items-center justify-center font-bold text-white flex-shrink-0">RO</div>
+            <span class="hidden lg:block truncate">Admin Center</span>
+        </div>
+        <nav class="flex-1 p-3 space-y-2 mt-4">
+            <button onclick="switchTab('overview')" id="navOverview" class="w-full group relative flex items-center gap-4 px-4 py-3 bg-primary-blue/10 text-primary-blue rounded-lg border-l-3 border-primary-blue font-medium transition-colors">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <span class="hidden lg:block truncate">Overview</span>
+                <span class="tooltip lg:hidden">Overview</span>
+            </button>
+            <button onclick="switchTab('staff')" id="navStaff" class="w-full group relative flex items-center gap-4 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg border-l-3 border-transparent transition-colors">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <span class="hidden lg:block truncate">Staff Management</span>
+                <span class="tooltip lg:hidden">Staff Management</span>
+            </button>
+            <button onclick="switchTab('reports')" id="navReports" class="w-full group relative flex items-center gap-4 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg border-l-3 border-transparent transition-colors">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="hidden lg:block truncate">Reports & Financials</span>
+                <span class="tooltip lg:hidden">Reports</span>
+            </button>
+        </nav>
+        <div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-3 truncate">
+                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-sm border-2 border-slate-600 shadow-inner">A</div>
+                <div class="hidden lg:block truncate">
+                    <p id="sidebarAdminName" class="font-medium text-sm text-white">Admin</p>
+                    <p class="text-xs text-slate-400">Hospital Admin</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full bg-gray-50 overflow-hidden relative">
+        <header class="bg-white border-b border-gray-200 p-6 flex justify-between items-center flex-shrink-0 z-10 shadow-sm md:shadow-none">
+            <div>
+                <h2 id="mainHeaderTitle" class="text-2xl font-bold text-gray-900 tracking-tight">System Overview</h2>
+                <p id="mainHeaderSub" class="text-sm text-gray-500 mt-1 hidden sm:block">Manage hospital staff, patients, and operations.</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="syncIndicator" class="hidden items-center gap-2 text-xs font-bold text-green-500 bg-green-50 px-3 py-1.5 rounded-full border border-green-200">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Live
+                </div>
+                <button onclick="handleLogout()" class="flex items-center gap-2 px-4 py-2 text-red-500 hover:bg-red-50 hover:text-red-700 rounded-xl font-bold text-sm transition-all border border-red-100 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span class="hidden sm:inline">Log Out</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+            
+            <div id="sectionOverview" class="fade-in block">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Patients</p>
+                        <h3 id="statTotalPatients" class="text-3xl font-bold text-gray-900 transition-all">-</h3>
+                        <p class="text-sm text-gray-400 mt-2 font-medium">Registered in system</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Today's Visits</p>
+                        <h3 id="statTodaysVisits" class="text-3xl font-bold text-primary-blue transition-all">-</h3>
+                        <p class="text-sm text-gray-400 mt-2 font-medium">Appointments today</p>
+                    </div>
+                    <div onclick="openPendingPaymentsModal()" class="bg-white p-5 rounded-xl shadow-sm border border-amber-100 flex flex-col justify-center cursor-pointer hover:shadow-md hover:bg-amber-50/50 transition-all ring-1 ring-transparent hover:ring-amber-200 group">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-amber-700 transition-colors">Pending Payments</p>
+                        <h3 id="statPendingPayments" class="text-3xl font-bold text-amber-600 transition-all">-</h3>
+                        <p class="text-sm text-amber-500 mt-2 font-bold flex items-center gap-1 group-hover:underline">
+                            View Debtors &rarr;
+                        </p>
+                    </div>
+                    <div onclick="openMissedApptsModal()" class="bg-white p-5 rounded-xl shadow-sm border border-red-100 flex flex-col justify-center cursor-pointer hover:shadow-md hover:bg-red-50/50 transition-all ring-1 ring-transparent hover:ring-red-200 group">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-red-700 transition-colors">Missed Appts</p>
+                        <h3 id="statMissedAppts" class="text-3xl font-bold text-red-600 transition-all">-</h3>
+                        <p class="text-sm text-red-500 mt-2 font-bold flex items-center gap-1 group-hover:underline">
+                            View Report &rarr;
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col max-w-3xl">
+                    <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-white">
+                        <h3 class="text-lg font-bold text-gray-800">Services & Pricing</h3>
+                        <button onclick="openEditPricesModal()" class="text-xs bg-primary-blue/10 text-primary-blue hover:bg-primary-blue hover:text-white px-3 py-1.5 rounded uppercase font-bold transition-colors">
+                            Edit Prices
+                        </button>
+                    </div>
+                    <div class="p-5 flex-1 overflow-y-auto max-h-[400px]">
+                        <div id="servicesGrid" class="space-y-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <p class="text-center text-gray-400 text-sm font-bold italic py-8 col-span-full">Loading services...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sectionStaff" class="fade-in hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col mb-8">
+                    <div class="p-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white gap-4">
+                        <div class="relative">
+                            <input type="text" id="staffSearchInput" onkeyup="filterStaff()" placeholder="Search staff..." class="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue w-full sm:w-64">
+                            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <button onclick="openAddStaffModal()" class="bg-primary-blue hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm shadow-sm transition-colors flex items-center gap-2 w-full sm:w-auto justify-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add New Staff
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left">
+                            <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                <tr>
+                                    <th class="px-6 py-4 sticky-col md:relative md:bg-gray-50">Staff Member</th>
+                                    <th class="px-6 py-4">Role</th>
+                                    <th class="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffTableBody" class="text-gray-700 divide-y divide-gray-100">
+                                <tr><td colspan="3" class="px-6 py-10 text-center text-gray-400 font-bold animate-pulse">Loading staff database...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sectionReports" class="fade-in hidden">
+                
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">Patient Database Export</h3>
+                        <p class="text-sm text-gray-500 mt-1">Download PDF reports segmented by patient activity.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <button onclick="triggerReportModal('active')" class="bg-form-teal hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg font-medium text-sm shadow-sm transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Active Patients
+                        </button>
+                        <button onclick="triggerReportModal('inactive')" class="bg-slate-700 hover:bg-slate-900 text-white px-5 py-2.5 rounded-lg font-medium text-sm shadow-sm transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Inactive Patients
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col mb-8">
+                    <div class="border-b border-gray-100 pb-4 mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Service Utilization</h3>
+                        <p class="text-sm text-gray-500 mt-1">Breakdown of the most frequently booked clinic services.</p>
+                    </div>
+                    
+                    <div class="relative h-64 w-full flex justify-center">
+                        <canvas id="serviceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col mb-8">
+                    <div class="p-5 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-white gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">Financial Overview</h3>
+                            <p class="text-xs text-gray-500 mt-1">M-Pesa Collections & Revenue</p>
+                        </div>
+                        
+                        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                            <input type="date" id="filterStart" class="flex-1 md:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue">
+                            <span class="text-gray-400 text-sm font-bold">to</span>
+                            <input type="date" id="filterEnd" class="flex-1 md:flex-none border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue">
+                            <button onclick="loadFinancials()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-black transition-colors w-full md:w-auto">Filter</button>
+                            <button onclick="clearFilters()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-300 transition-colors w-full md:w-auto">Clear</button>
+                            <button onclick="downloadFinancialReport()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 flex items-center justify-center gap-2 transition-colors w-full md:w-auto">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Export PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="printableReport" class="p-6 bg-white">
+                        <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl mb-6 text-center">
+                            <h4 class="text-blue-600 font-bold uppercase tracking-widest text-xs mb-1">Total Revenue Generated</h4>
+                            <h1 id="totalRevenueDisplay" class="text-4xl font-black text-primary-blue">Ksh 0</h1>
+                            <p id="transactionCountDisplay" class="text-sm text-blue-500 font-medium mt-2">0 successful transactions</p>
+                        </div>
+
+                        <details id="transactionsDropdown" class="group border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                            <summary class="flex justify-between items-center font-bold cursor-pointer p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-gray-800">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-primary-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    View Recent Transactions
+                                </span>
+                                <span class="transition transform group-open:rotate-180">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </span>
+                            </summary>
+                            
+                            <div class="overflow-x-auto border-t border-gray-200 bg-white max-h-[400px] overflow-y-auto">
+                                <table class="min-w-full text-sm text-left">
+                                    <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 sticky top-0 shadow-sm z-10">
+                                        <tr>
+                                            <th class="px-4 py-4 bg-gray-50">Date</th>
+                                            <th class="px-4 py-4 bg-gray-50">Receipt No.</th>
+                                            <th class="px-4 py-4 bg-gray-50">Patient Name</th>
+                                            <th class="px-4 py-4 bg-gray-50">Phone Number</th>
+                                            <th class="px-4 py-4 text-right bg-gray-50">Amount (Ksh)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="financialTableBody" class="divide-y divide-gray-50 text-gray-700">
+                                        <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400 font-bold animate-pulse">Loading financial data...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col mb-8">
+                    <div class="border-b border-gray-100 pb-4 mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Clinician Performance</h3>
+                        <p class="text-sm text-gray-500 mt-1">Comparing patient volume across medical staff.</p>
+                    </div>
+                    
+                    <div class="relative h-64 w-full flex justify-center">
+                        <canvas id="clinicianChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+<div id="pdfWrapper" class="hidden">
+        <div id="pdfExportTemplate" class="bg-white p-8 text-gray-900 border border-gray-200 font-sans mx-auto" style="width: 680px; box-sizing: border-box;">
+            <div class="flex justify-between items-end border-b-[3px] border-primary-blue pb-4 mb-6">
+                <div>
+                    <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase">Regional Opticians</h1>
+                    <p class="text-[10px] text-primary-blue font-black uppercase tracking-widest mt-1">Official Financial Performance Report</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-bold text-gray-900" id="pdfExportDate"></p>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Report Generated On</p>
+                </div>
+            </div>
+
+            <div class="flex gap-4 mb-6">
+                 <div class="flex-1 bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
+                     <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-1">Total Revenue Collected</p>
+                     <h2 id="pdfTotalRev" class="text-2xl font-black text-primary-blue">Ksh 0</h2>
+                 </div>
+                 <div class="flex-1 bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
+                     <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Total Transactions</p>
+                     <h2 id="pdfTotalTrans" class="text-2xl font-black text-gray-800">0</h2>
+                 </div>
+                 <div class="flex-1 bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
+                     <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Avg Transaction Value</p>
+                     <h2 id="pdfAvgVal" class="text-2xl font-black text-gray-800">Ksh 0</h2>
+                 </div>
+            </div>
+
+            <table class="w-full text-left text-sm mb-8 border-collapse mt-8">
+                <thead>
+                    <tr class="border-b-2 border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
+                        <th class="py-3 px-2 font-bold">Date</th>
+                        <th class="py-3 px-2 font-bold">Receipt No.</th>
+                        <th class="py-3 px-2 font-bold">Patient Name</th>
+                        <th class="py-3 px-2 font-bold">Phone Number</th>
+                        <th class="py-3 px-2 font-bold text-right">Amount (Ksh)</th>
+                    </tr>
+                </thead>
+                <tbody id="pdfTableBody" class="divide-y divide-gray-100 text-gray-800">
+                </tbody>
+            </table>
+
+            <div class="border-t border-gray-200 pt-4 text-center mt-12">
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Generated by Regional Opticians Administration System</p>
+                <p class="text-[9px] text-gray-400 mt-1 italic">Confidential Document. Do not distribute outside of hospital management.</p>
+            </div>
+        </div>
+    </div>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-slate-900 text-slate-400 flex md:hidden items-center justify-around border-t border-slate-800 z-50">
+        <button onclick="switchTab('overview')" id="mobileNavOverview" class="flex flex-col items-center gap-1 p-3 text-primary-blue border-t-3 border-primary-blue bg-slate-800 transition-colors w-full">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            <span class="text-[9px] uppercase font-bold">Dash</span>
+        </button>
+        <button onclick="switchTab('staff')" id="mobileNavStaff" class="flex flex-col items-center gap-1 p-3 hover:text-white border-t-3 border-transparent transition-colors w-full">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <span class="text-[9px] uppercase font-bold">Staff</span>
+        </button>
+        <button onclick="switchTab('reports')" id="mobileNavReports" class="flex flex-col items-center gap-1 p-3 hover:text-white border-t-3 border-transparent transition-colors w-full">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span class="text-[9px] uppercase font-bold">Reports</span>
+        </button>
+        <button onclick="handleLogout()" class="flex flex-col items-center gap-1 p-3 text-red-400 hover:text-red-300 transition-colors w-full border-t-3 border-transparent">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            <span class="text-[9px] uppercase font-bold">Logout</span>
+        </button>
+    </nav>
+
+    <div id="pendingPaymentsModal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+        <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm fixed" onclick="closePendingPaymentsModal()"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative z-10 flex flex-col overflow-hidden border border-slate-200 max-h-[90vh]">
+                <div class="p-6 border-b border-amber-100 flex justify-between items-center bg-amber-50/50 flex-shrink-0">
+                    <div>
+                        <h3 class="text-lg font-bold text-amber-800">Exception Report: Pending Payments</h3>
+                        <p class="text-xs text-amber-600 mt-1">Failed or incomplete M-Pesa transactions requiring follow-up.</p>
+                    </div>
+                    <button type="button" onclick="closePendingPaymentsModal()" class="text-gray-400 hover:text-amber-500 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="overflow-y-auto flex-1 p-0">
+                    <table class="min-w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="px-6 py-4 bg-gray-50">Date</th>
+                                <th class="px-6 py-4 bg-gray-50">Patient Phone</th>
+                                <th class="px-6 py-4 bg-gray-50">Amount Owed</th>
+                                <th class="px-6 py-4 bg-gray-50 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingPaymentsTableBody" class="divide-y divide-gray-50 text-gray-700 bg-white">
+                            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 font-bold animate-pulse">Loading financial exceptions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="missedApptsModal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+        <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm fixed" onclick="closeMissedApptsModal()"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative z-10 flex flex-col overflow-hidden border border-slate-200 max-h-[90vh]">
+                <div class="p-6 border-b border-red-100 flex justify-between items-center bg-red-50/50 flex-shrink-0">
+                    <div>
+                        <h3 class="text-lg font-bold text-red-800">Exception Report: No-Shows</h3>
+                        <p class="text-xs text-red-600 mt-1">Missed or cancelled appointments requiring SMS follow-up.</p>
+                    </div>
+                    <button type="button" onclick="closeMissedApptsModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="overflow-y-auto flex-1 p-0">
+                    <table class="min-w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="px-6 py-4 bg-gray-50">Date</th>
+                                <th class="px-6 py-4 bg-gray-50">Patient Phone</th>
+                                <th class="px-6 py-4 bg-gray-50">Missed Service</th>
+                                <th class="px-6 py-4 bg-gray-50 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="noShowsTableBody" class="divide-y divide-gray-50 text-gray-700 bg-white">
+                            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 font-bold animate-pulse">Loading exceptions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addStaffModal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+        <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm fixed"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 text-left overflow-hidden border border-slate-200">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-900">Register New Staff</h3>
+                    <button type="button" onclick="closeAddStaffModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <form id="addStaffForm" onsubmit="submitNewStaff(event)" class="p-6 space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">Staff Full Name</label>
+                        <input type="text" id="staffName" required class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">Phone Number</label>
+                        <div class="flex shadow-sm">
+                            <span id="staffPhonePrefix" class="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-gray-200 bg-gray-50 text-gray-600 sm:text-sm font-bold">+254</span>
+                            <input type="text" inputmode="numeric" id="staffPhone" maxlength="9" oninput="clearStaffErrors('add'); this.value = this.value.replace(/[^0-9]/g, '')" required class="flex-1 min-w-0 block w-full px-4 py-2.5 rounded-none rounded-r-lg bg-white border border-gray-200 text-sm focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue">
+                        </div>
+                        <p id="staffPhoneError" class="text-red-500 text-xs font-bold mt-1.5 hidden"></p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">System Role</label>
+                        <select id="staffRole" required class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue">
+                            <option value="" disabled selected>Select an access level...</option>
+                            <option value="clinician">Clinician (Optometrist / Doctor)</option>
+                            <option value="admin">System Administrator</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-2 flex gap-3">
+                        <button type="button" onclick="closeAddStaffModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-bold text-sm transition-colors">Cancel</button>
+                        <button type="submit" id="saveStaffBtn" class="flex-1 bg-primary-blue hover:bg-blue-700 text-white py-3 rounded-lg font-bold text-sm transition-colors shadow-md">Create Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="editStaffModal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+        <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm fixed"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 text-left overflow-hidden border border-slate-200">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-primary-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        Edit Staff Record
+                    </h3>
+                    <button type="button" onclick="closeEditStaffModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <form id="editStaffForm" onsubmit="submitEditStaff(event)" class="p-6 space-y-5">
+                    <input type="hidden" id="editStaffId">
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">Staff Full Name</label>
+                        <input type="text" id="editStaffName" required class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">Phone Number</label>
+                        <div class="flex shadow-sm">
+                            <span id="editStaffPhonePrefix" class="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-gray-200 bg-gray-50 text-gray-600 sm:text-sm font-bold">+254</span>
+                            <input type="text" inputmode="numeric" id="editStaffPhone" maxlength="9" oninput="clearStaffErrors('edit'); this.value = this.value.replace(/[^0-9]/g, '')" required class="flex-1 min-w-0 block w-full px-4 py-2.5 rounded-none rounded-r-lg bg-white border border-gray-200 text-sm focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue">
+                        </div>
+                        <p id="editStaffPhoneError" class="text-red-500 text-xs font-bold mt-1.5 hidden"></p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">System Role</label>
+                        <select id="editStaffRole" required class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue">
+                            <option value="clinician">Clinician (Optometrist / Doctor)</option>
+                            <option value="admin">System Administrator</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-2 flex gap-3">
+                        <button type="button" onclick="closeEditStaffModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-bold text-sm transition-colors">Cancel</button>
+                        <button type="submit" id="updateStaffBtn" class="flex-1 bg-primary-blue hover:bg-blue-700 text-white py-3 rounded-lg font-bold text-sm transition-colors shadow-md">Update Details</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="editPricesModal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+        <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm fixed"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 text-left overflow-hidden border border-slate-200">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-primary-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Edit Service Pricing
+                    </h3>
+                    <button type="button" onclick="closeEditPricesModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <form id="editPricesForm" onsubmit="submitPrices(event)" class="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
+                    <div id="priceInputsContainer"></div>
+                    <div class="pt-4 flex gap-3 border-t border-gray-100 mt-4">
+                        <button type="button" onclick="closeEditPricesModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-bold text-sm transition-colors">Cancel</button>
+                        <button type="submit" id="savePricesBtn" class="flex-1 bg-primary-blue hover:bg-blue-700 text-white py-3 rounded-lg font-bold text-sm transition-colors shadow-md">Save to Database</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 relative z-10 text-center">
+                <div id="confirmIconContainer" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4"></div>
+                <h3 id="confirmTitle" class="text-lg font-black text-slate-900 mb-2">Confirm</h3>
+                <p id="confirmMessage" class="text-sm text-slate-500 mb-6 font-medium">Are you sure?</p>
+                <div class="flex gap-3">
+                    <button onclick="closeConfirmModal()" class="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all text-xs uppercase tracking-widest">Cancel</button>
+                    <button id="confirmActionBtn" onclick="executePendingAction()" class="flex-1 px-4 py-3 text-white rounded-xl font-bold transition-all text-xs uppercase tracking-widest">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="noticeModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 relative z-10 text-center">
+                <div id="noticeIconContainer" class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4"></div>
+                <h3 id="noticeTitle" class="text-lg font-black text-slate-900 mb-2 tracking-tight">Notification</h3>
+                <p id="noticeMessage" class="text-sm text-slate-500 mb-6 font-medium">Message goes here.</p>
+                <button onclick="closeNoticeModal()" class="w-full px-4 py-3 bg-slate-900 hover:bg-black text-white rounded-xl font-bold transition-all text-xs uppercase tracking-widest">OK</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const adminName = localStorage.getItem('userName');
+        if (adminName) {
+            document.getElementById('sidebarAdminName').innerText = adminName;
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+// 1. Clears out red error borders from previous failed attempts
+        function clearStaffErrors(type) {
+            const prefix = type === 'add' ? 'staff' : 'editStaff';
+            const phoneInput = document.getElementById(`${prefix}Phone`);
+            if (phoneInput) phoneInput.classList.remove('border-red-500', 'ring-red-500', 'bg-red-50');
+            const phonePrefix = document.getElementById(`${prefix}PhonePrefix`);
+            if (phonePrefix) phonePrefix.classList.remove('border-red-500', 'bg-red-50', 'text-red-500');
+            const phoneError = document.getElementById(`${prefix}PhoneError`);
+            if (phoneError) phoneError.classList.add('hidden');
+        }
+
+        // 2. Opens the modal and resets the form
+        function openAddStaffModal() {
+            document.getElementById('addStaffForm').reset();
+            clearStaffErrors('add');
+            document.getElementById('addStaffModal').classList.remove('hidden');
+        }
+
+        // 3. Closes the modal
+        function closeAddStaffModal() {
+            document.getElementById('addStaffModal').classList.add('hidden');
+        }
+        // --- ADD NEW STAFF LOGIC ---
+async function submitNewStaff(e) {
+    e.preventDefault();
+    clearStaffErrors('add');
+
+    const fullName = document.getElementById('staffName').value.trim();
+    const phoneVal = document.getElementById('staffPhone').value.replace(/\s+/g, '').replace(/[^0-9]/g, '');
+    const role = document.getElementById('staffRole').value;
+
+    if (phoneVal.length !== 9) {
+        document.getElementById('staffPhone').classList.add('border-red-500', 'ring-red-500', 'bg-red-50');
+        document.getElementById('staffPhonePrefix').classList.add('border-red-500', 'bg-red-50', 'text-red-500');
+        const phoneErr = document.getElementById('staffPhoneError');
+        phoneErr.innerText = "Phone number must be exactly 9 digits.";
+        phoneErr.classList.remove('hidden');
+        return;
+    }
+
+    const btn = document.getElementById('saveStaffBtn');
+    btn.innerHTML = "Creating...";
+    btn.disabled = true;
+
+    const finalPhone = `+254${phoneVal}`;
+
+    try {
+        const res = await fetch('http://localhost:3000/api/admin/add-staff', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ fullName, phone: finalPhone, role })
+        });
+
+        const data = await res.json();
+        
+        if (!res.ok) {
+            throw new Error(data.message || "Failed to add staff");
+        }
+
+        closeAddStaffModal();
+        showNoticeModal(true, "Staff Added", `${fullName} has been added. SMS credentials sent!`);
+        fetchAdminData(); // Refresh the table
+
+    } catch (err) {
+        showNoticeModal(false, "System Error", err.message);
+    } finally {
+        btn.innerHTML = "Create Account";
+        btn.disabled = false;
+    }
+}
+
+// --- UPDATE PRICES LOGIC ---
+async function submitPrices(event) {
+    event.preventDefault();
+    const btn = document.getElementById('savePricesBtn');
+    btn.innerText = 'Saving...';
+    btn.disabled = true;
+
+    try {
+        // Find all the price inputs in the modal
+        const inputs = document.querySelectorAll('#priceInputsContainer input[type="number"]');
+        let hasError = false;
+
+        // Loop through the inputs and update the database for any that changed
+        for (const input of inputs) {
+            const serviceName = input.getAttribute('data-name');
+            const newPrice = Number(input.value);
+
+            // Only send a request if the admin actually changed this specific price
+            if (currentServices[serviceName] !== newPrice) {
+                const res = await fetch('http://localhost:3000/api/admin/update-price', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ serviceName, newPrice })
+                });
+                
+                if (!res.ok) hasError = true;
+            }
+        }
+
+        if (hasError) throw new Error("Some prices failed to update. Please check the server logs.");
+
+        showNoticeModal(true, "Success", "Service prices updated successfully!");
+        closeEditPricesModal();
+        fetchServices(); // Refresh the dashboard grid with new prices
+
+    } catch (error) {
+        showNoticeModal(false, "Error", error.message);
+    } finally {
+        btn.innerText = 'Save to Database';
+        btn.disabled = false;
+    }
+}
+    // --- EDIT STAFF LOGIC ---
+        function openEditStaffModal(id, name, phone, role) {
+            clearStaffErrors('edit');
+            document.getElementById('editStaffId').value = id;
+            document.getElementById('editStaffName').value = name;
+            
+            // Strip the +254 so it fits cleanly in the input box
+            const cleanPhone = phone ? phone.replace('+254', '') : '';
+            document.getElementById('editStaffPhone').value = cleanPhone;
+            document.getElementById('editStaffRole').value = role;
+            
+            document.getElementById('editStaffModal').classList.remove('hidden');
+        }
+
+        function closeEditStaffModal() {
+            document.getElementById('editStaffModal').classList.add('hidden');
+        }
+
+        async function submitEditStaff(e) {
+            e.preventDefault();
+            clearStaffErrors('edit');
+
+            const id = document.getElementById('editStaffId').value;
+            const name = document.getElementById('editStaffName').value.trim();
+            const phoneVal = document.getElementById('editStaffPhone').value.replace(/\s+/g, '').replace(/[^0-9]/g, '');
+            const role = document.getElementById('editStaffRole').value;
+
+            if (phoneVal.length !== 9) {
+                document.getElementById('editStaffPhone').classList.add('border-red-500', 'ring-red-500', 'bg-red-50');
+                document.getElementById('editStaffPhonePrefix').classList.add('border-red-500', 'bg-red-50', 'text-red-500');
+                const phoneErr = document.getElementById('editStaffPhoneError');
+                phoneErr.innerText = "Phone number must be exactly 9 digits.";
+                phoneErr.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('updateStaffBtn');
+            btn.innerHTML = "Saving...";
+            btn.disabled = true;
+
+            const finalPhone = `+254${phoneVal}`;
+
+            try {
+                const res = await fetch(`http://localhost:3000/api/admin/staff/${id}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ fullName: name, phone: finalPhone, role: role })
+                });
+
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    if (res.status === 400 && data.message && data.message.toLowerCase().includes('already')) {
+                        document.getElementById('editStaffPhone').classList.add('border-red-500', 'ring-red-500', 'bg-red-50');
+                        document.getElementById('editStaffPhonePrefix').classList.add('border-red-500', 'bg-red-50', 'text-red-500');
+                        const phoneErr = document.getElementById('editStaffPhoneError');
+                        phoneErr.innerText = data.message || "Phone number already exists in database.";
+                        phoneErr.classList.remove('hidden');
+                        return;
+                    }
+                    throw new Error(data.message || "Failed to update staff");
+                }
+
+                closeEditStaffModal();
+                showNoticeModal(true, "Update Successful", `${name}'s details have been successfully modified.`);
+                fetchAdminData(); 
+
+            } catch (err) {
+                showNoticeModal(false, "System Error", err.message);
+            } finally {
+                btn.innerHTML = "Update Details";
+                btn.disabled = false;
+            }
+        }
+
+        // --- REVOKE STAFF LOGIC ---
+        function confirmRevokeAccess(staffId, staffName) {
+            showConfirmModal(
+                "Revoke System Access", 
+                `Are you sure you want to completely remove ${staffName} from the system? They will no longer be able to log in.`, 
+                'revoke-staff', 
+                { id: staffId }, 
+                true // This 'true' turns the confirm button red for a destructive action
+            );
+        }    
+        // --- TAB SWITCHING LOGIC ---
+        function switchTab(tabId) {
+            document.getElementById('sectionOverview').classList.add('hidden');
+            document.getElementById('sectionStaff').classList.add('hidden');
+            document.getElementById('sectionReports').classList.add('hidden');
+
+            const targetSection = document.getElementById('section' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
+            targetSection.classList.remove('hidden');
+
+            const headerTitle = document.getElementById('mainHeaderTitle');
+            const headerSub = document.getElementById('mainHeaderSub');
+            if (tabId === 'overview') {
+                headerTitle.innerText = "System Overview"; headerSub.innerText = "Manage hospital staff, patients, and operations.";
+                loadNoShowsReport(); 
+                loadPendingPaymentsReport();
+            } else if (tabId === 'staff') {
+                headerTitle.innerText = "Staff Management"; headerSub.innerText = "Add, edit, and revoke staff access.";
+            } else if (tabId === 'reports') {
+                headerTitle.innerText = "Reports & Financials"; headerSub.innerText = "Generate exports and view financial data.";
+                loadServiceUtilizationChart(); 
+                loadClinicianPerformanceChart(); 
+            }
+
+            ['Overview', 'Staff', 'Reports'].forEach(nav => {
+                const btn = document.getElementById('nav' + nav);
+                if(nav.toLowerCase() === tabId) {
+                    btn.className = "w-full group relative flex items-center gap-4 px-4 py-3 bg-primary-blue/10 text-primary-blue rounded-lg border-l-3 border-primary-blue font-medium transition-colors";
+                } else {
+                    btn.className = "w-full group relative flex items-center gap-4 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg border-l-3 border-transparent transition-colors";
+                }
+            });
+
+            ['Overview', 'Staff', 'Reports'].forEach(nav => {
+                const btn = document.getElementById('mobileNav' + nav);
+                if(nav.toLowerCase() === tabId) {
+                    btn.className = "flex flex-col items-center gap-1 p-3 text-primary-blue border-t-3 border-primary-blue bg-slate-800 transition-colors w-full";
+                    btn.querySelector('span').classList.add('text-primary-blue');
+                } else {
+                    btn.className = "flex flex-col items-center gap-1 p-3 hover:text-white border-t-3 border-transparent text-slate-400 transition-colors w-full";
+                    btn.querySelector('span').classList.remove('text-primary-blue');
+                }
+            });
+        }
+
+        // Modal triggers
+        function openPendingPaymentsModal() { document.getElementById('pendingPaymentsModal').classList.remove('hidden'); loadPendingPaymentsReport(); }
+        function closePendingPaymentsModal() { document.getElementById('pendingPaymentsModal').classList.add('hidden'); }
+        function openMissedApptsModal() { document.getElementById('missedApptsModal').classList.remove('hidden'); loadNoShowsReport(); }
+        function closeMissedApptsModal() { document.getElementById('missedApptsModal').classList.add('hidden'); }
+        function openEditPricesModal() {
+            const container = document.getElementById('priceInputsContainer');
+            container.innerHTML = Object.entries(currentServices).map(([name, price], index) => `
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">${name}</label>
+                    <div class="flex shadow-sm">
+                        <span class="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-gray-200 bg-gray-50 text-gray-600 sm:text-sm font-bold">Ksh</span>
+                        <input type="number" id="price_${index}" data-name="${name}" value="${price}" required min="0" step="50" class="flex-1 min-w-0 block w-full px-4 py-2.5 rounded-none rounded-r-lg bg-white border border-gray-200 text-sm font-bold focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue">
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('editPricesModal').classList.remove('hidden');
+        }
+        function closeEditPricesModal() { document.getElementById('editPricesModal').classList.add('hidden'); }
+        function showNoticeModal(isSuccess, title, message) {
+            document.getElementById('noticeTitle').innerText = title;
+            document.getElementById('noticeMessage').innerText = message;
+            const iconContainer = document.getElementById('noticeIconContainer');
+            if (isSuccess) {
+                iconContainer.className = "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4 text-green-600";
+                iconContainer.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
+            } else {
+                iconContainer.className = "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4 text-red-600";
+                iconContainer.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+            }
+            document.getElementById('noticeModal').classList.remove('hidden');
+        }
+        function closeNoticeModal() { document.getElementById('noticeModal').classList.add('hidden'); }
+
+        let pendingAction = null; 
+        let pendingData = null;
+        function showConfirmModal(title, message, action, data, isDestructive = false) {
+            pendingAction = action; pendingData = data;
+            document.getElementById('confirmTitle').innerText = title; document.getElementById('confirmMessage').innerText = message;
+            const confirmBtn = document.getElementById('confirmActionBtn');
+            const iconContainer = document.getElementById('confirmIconContainer');
+            if (isDestructive) {
+                confirmBtn.className = "flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all text-xs uppercase tracking-widest";
+                iconContainer.className = "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4 text-red-600";
+                iconContainer.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+            } else {
+                confirmBtn.className = "flex-1 px-4 py-3 bg-primary-blue hover:bg-blue-700 text-white rounded-xl font-bold transition-all text-xs uppercase tracking-widest";
+                iconContainer.className = "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4 text-primary-blue";
+                iconContainer.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>`;
+            }
+            document.getElementById('confirmModal').classList.remove('hidden');
+        }
+        function closeConfirmModal() { pendingAction = null; pendingData = null; document.getElementById('confirmModal').classList.add('hidden'); }
+
+        async function executePendingAction() {
+            if (!pendingAction || !pendingData) return;
+            const action = pendingAction; const data = pendingData;
+            const confirmBtn = document.getElementById('confirmActionBtn');
+            const originalText = confirmBtn.innerText;
+            confirmBtn.innerText = "PROCESSING..."; confirmBtn.disabled = true;
+
+            try {
+                if (action === 'revoke-staff') {
+                    const res = await fetch(`http://localhost:3000/api/admin/staff/${data.id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    });
+                    
+                    const resultData = await res.json();
+                    closeConfirmModal();
+                    
+                    if (res.ok) {
+                        showNoticeModal(true, "Access Revoked", resultData.message || "Staff member removed successfully.");
+                        fetchAdminData(); 
+                    } else {
+                        showNoticeModal(false, "Failed", resultData.message || "Could not revoke access.");
+                    }
+                } 
+              else if (action === 'download-report') {
+                    closeConfirmModal();
+                    await downloadPatientReport(data.status);
+                }  
+                else if (action === 'send-reminder') {
+                    setTimeout(() => {
+                        closeConfirmModal();
+                        showNoticeModal(true, "Notification Sent", `Action completed for ${data.phone}.`);
+                    }, 1000);
+                }
+            } catch (err) {
+                closeConfirmModal();
+                showNoticeModal(false, "Network Error", "Could not connect to server.");
+            } finally {
+                confirmBtn.innerText = originalText; confirmBtn.disabled = false;
+            }
+        }
+
+        // --- DASHBOARD API POLLING ---
+        let currentServices = {};
+        async function fetchServices() {
+            try {
+                const res = await fetch('http://localhost:3000/api/services');
+                const data = await res.json();
+                currentServices = {};
+                data.forEach(s => currentServices[s.name] = s.price);
+                renderServices();
+            } catch (err) { console.error("Failed to fetch services", err); }
+        }
+        function renderServices() {
+            const grid = document.getElementById('servicesGrid');
+            grid.innerHTML = Object.entries(currentServices).map(([name, price]) => `
+                <div class="border border-gray-100 rounded-xl p-4 bg-gray-50 flex justify-between items-center hover:shadow-sm transition-shadow">
+                    <span class="text-sm font-bold text-gray-700">${name}</span>
+                    <span class="text-lg font-black text-primary-blue bg-blue-50 px-3 py-1 rounded-lg">Ksh ${price.toLocaleString()}</span>
+                </div>
+            `).join('');
+        }
+
+        async function fetchAdminData() {
+            try {
+                const res = await fetch('http://localhost:3000/api/admin/stats', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+                if (!res.ok) throw new Error("Failed to sync");
+                const data = await res.json();
+                
+                document.getElementById('syncIndicator').classList.remove('hidden');
+                document.getElementById('syncIndicator').classList.add('flex');
+
+                document.getElementById('statTotalPatients').innerText = data.totalPatients.toLocaleString();
+                document.getElementById('statTodaysVisits').innerText = data.todaysVisits;
+                document.getElementById('statPendingPayments').innerText = data.pendingPayments;
+                document.getElementById('statMissedAppts').innerText = data.missedAppts;
+
+                // --- RESTORED: Staff Table Rendering ---
+                let newRowsHTML = '';
+                
+                if(!data.staffList || data.staffList.length === 0) {
+                    newRowsHTML = `<tr><td colspan="3" class="px-6 py-6 text-center text-gray-500">No staff found.</td></tr>`;
+                } else {
+                    data.staffList.forEach(staff => {
+                        const initials = staff.fullName ? staff.fullName.substring(0, 2).toUpperCase() : 'U';
+                        const safeName = staff.fullName ? staff.fullName.replace(/'/g, "\\'") : 'Unknown';
+                        
+                        newRowsHTML += `
+                            <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors staff-row">
+                                <td class="px-6 py-4 whitespace-nowrap sticky-col md:relative">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">${initials}</div>
+                                        <div>
+                                            <p class="font-bold text-gray-900">${staff.fullName}</p>
+                                            <p class="text-xs text-gray-500">${staff.phone || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <p class="font-bold text-gray-600 capitalize text-sm">${staff.role}</p>
+                                    <span class="px-2 py-0.5 inline-flex text-[10px] uppercase leading-5 font-black rounded bg-green-100 text-green-800 border border-green-200 mt-1">Active</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button onclick="openEditStaffModal('${staff._id}', '${safeName}', '${staff.phone || ''}', '${staff.role}')" class="text-gray-400 hover:text-primary-blue transition-colors mr-3" title="Edit Staff"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                                    <button onclick="confirmRevokeAccess('${staff._id}', '${safeName}')" class="text-gray-400 hover:text-red-500 transition-colors" title="Revoke Access"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                const tbody = document.getElementById('staffTableBody');
+                if (tbody) {
+                    tbody.innerHTML = newRowsHTML;
+                    filterStaff(); 
+                }
+                // ---------------------------------------
+
+            } catch (error) {
+                console.error("Dashboard Sync Error:", error);
+                document.getElementById('syncIndicator').classList.add('hidden');
+                document.getElementById('syncIndicator').classList.remove('flex');
+            }
+        }
+
+        // --- EXCEPTION REPORTS ---
+        async function loadPendingPaymentsReport() {
+            try {
+                const res = await fetch('http://localhost:3000/api/admin/reports/pending-payments', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+                if (!res.ok) throw new Error("Failed");
+                const data = await res.json();
+                const tbody = document.getElementById('pendingPaymentsTableBody');
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-green-500 font-bold">Excellent! No pending or failed payments.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = data.map(payment => {
+                    const phone = payment.phone || 'N/A';
+                    const amount = payment.amount ? payment.amount.toLocaleString() : '0';
+                    return `
+                    <tr class="hover:bg-amber-50/30 transition-colors">
+                        <td class="px-6 py-4 font-medium text-gray-600 whitespace-nowrap">${new Date(payment.date || payment.createdAt).toLocaleDateString()}</td>
+                        <td class="px-6 py-4 font-bold text-gray-900">${phone}</td>
+                        <td class="px-6 py-4 text-amber-600 font-bold">Ksh ${amount}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="sendPaymentReminder('${phone}', '${amount}')" class="text-xs bg-amber-100 text-amber-700 hover:bg-amber-600 hover:text-white px-3 py-1.5 rounded uppercase font-bold transition-colors shadow-sm">
+                                Send Invoice
+                            </button>
+                        </td>
+                    </tr>
+                `}).join('');
+            } catch (error) {
+                document.getElementById('pendingPaymentsTableBody').innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-red-500 font-bold">Error loading exceptions.</td></tr>`;
+            }
+        }
+
+        async function loadNoShowsReport() {
+            try {
+                const res = await fetch('http://localhost:3000/api/admin/reports/no-shows', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                if (!res.ok) throw new Error("Failed to fetch no-shows");
+                
+                const data = await res.json();
+                const tbody = document.getElementById('noShowsTableBody');
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-green-500 font-bold">Excellent! No missed appointments.</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = data.map(appt => {
+                    const phone = appt.patientId ? appt.patientId.phone : 'N/A';
+                    return `
+                    <tr class="hover:bg-red-50/30 transition-colors">
+                        <td class="px-6 py-4 font-medium text-gray-600 whitespace-nowrap">${new Date(appt.date).toLocaleDateString()}</td>
+                        <td class="px-6 py-4 font-bold text-gray-900">${phone}</td>
+                        <td class="px-6 py-4 text-red-600 font-bold">${appt.service}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="sendFollowUpSMS('${phone}', '${appt.date}')" class="text-xs bg-red-100 text-red-700 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded uppercase font-bold transition-colors shadow-sm">
+                                Send Follow-up
+                            </button>
+                        </td>
+                    </tr>
+                `}).join('');
+            } catch (error) {
+                console.error("Error loading no-shows:", error);
+                document.getElementById('noShowsTableBody').innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-red-500 font-bold">Error loading exceptions.</td></tr>`;
+            }
+        }
+
+        function sendFollowUpSMS(phone, date) {
+            if (!phone || phone === 'Unknown' || phone === 'N/A') {
+                showNoticeModal(false, "Cannot Send SMS", "No valid phone number found for this patient.");
+                return;
+            }
+            showConfirmModal(
+                "Send Follow-Up SMS",
+                `Send a missed appointment reminder to ${phone}?`,
+                'send-reminder', 
+                { phone: phone, service: `follow-up for missed appointment on ${date}` },
+                false
+            );
+        }
+
+      // --- FINANCIALS & DUAL PDF LOGIC ---
+        function clearFilters() {
+            document.getElementById('filterStart').value = '';
+            document.getElementById('filterEnd').value = '';
+            loadFinancials(); // Refresh the table without date parameters
+        }
+
+        async function loadFinancials() {
+            const startDate = document.getElementById('filterStart').value;
+            const endDate = document.getElementById('filterEnd').value;
+            
+            let url = 'http://localhost:3000/api/admin/reports/financials';
+            if (startDate && endDate) {
+                url += `?startDate=${startDate}&endDate=${endDate}`;
+            }
+
+            try {
+                const response = await fetch(url, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+                if (!response.ok) throw new Error("Failed to fetch financials");
+                const data = await response.json();
+                
+                // Update the Dashboard UI
+                document.getElementById('totalRevenueDisplay').innerText = `Ksh ${data.totalRevenue.toLocaleString()}`;
+                document.getElementById('transactionCountDisplay').innerText = `${data.count} successful transactions`;
+                
+                const uiBody = document.getElementById('financialTableBody');
+                if (data.payments.length === 0) {
+                    uiBody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500 font-bold">No transactions found for this period.</td></tr>`;
+                } else {
+                    uiBody.innerHTML = data.payments.map(payment => `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 font-medium text-gray-600">${new Date(payment.createdAt || payment.date).toLocaleDateString()}</td>
+                            <td class="px-4 py-3 font-black text-gray-900">${payment.receiptNumber}</td>
+                            <td class="px-4 py-3 text-slate-800 font-bold">${payment.patientName || 'Walk-in'}</td>
+                            <td class="px-4 py-3 text-gray-500">${payment.phone || 'N/A'}</td>
+                            <td class="px-4 py-3 text-right font-bold text-green-600">Ksh ${payment.amount.toLocaleString()}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Populate the hidden PDF Template
+                document.getElementById('pdfTotalRev').innerText = `Ksh ${data.totalRevenue.toLocaleString()}`;
+                document.getElementById('pdfTotalTrans').innerText = data.count;
+                const avgVal = data.count > 0 ? (data.totalRevenue / data.count).toFixed(0) : 0;
+                if(document.getElementById('pdfAvgVal')) document.getElementById('pdfAvgVal').innerText = `Ksh ${parseInt(avgVal).toLocaleString()}`;
+                if(document.getElementById('pdfExportDate')) document.getElementById('pdfExportDate').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+                const pdfBody = document.getElementById('pdfTableBody');
+                if (pdfBody) {
+                    if (data.payments.length === 0) {
+                        pdfBody.innerHTML = `<tr><td colspan="5" class="px-2 py-4 text-center text-gray-500 italic">No transactions recorded.</td></tr>`;
+                    } else {
+                        pdfBody.innerHTML = data.payments.map(payment => `
+                            <tr>
+                                <td class="px-2 py-3">${new Date(payment.createdAt || payment.date).toLocaleDateString()}</td>
+                                <td class="px-2 py-3 font-bold">${payment.receiptNumber}</td>
+                                <td class="px-2 py-3">${payment.patientName || 'Walk-in'}</td>
+                                <td class="px-2 py-3">${payment.phone || 'N/A'}</td>
+                                <td class="px-2 py-3 text-right">Ksh ${payment.amount.toLocaleString()}</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+
+            } catch (error) {
+                console.error("Error loading financials:", error);
+                document.getElementById('financialTableBody').innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-red-500 font-bold">Error loading financial data.</td></tr>`;
+            }
+        }
+
+// Generates the A4 PDF Document
+        function downloadFinancialReport() {
+            const wrapper = document.getElementById('pdfWrapper');
+            const reportContent = document.getElementById('pdfExportTemplate');
+            const btn = document.querySelector('button[onclick="downloadFinancialReport()"]');
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Generating PDF...";
+            btn.disabled = true;
+            
+            // 1. Un-hide the template so the browser starts drawing it
+            wrapper.classList.remove('hidden');
+            
+            const opt = {
+                margin:       [0.5, 0.5, 0.5, 0.5], 
+                filename:     `Regional_Opticians_Financials_${new Date().toISOString().split('T')[0]}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // 2. WAIT 100 milliseconds for the pixels to appear on screen before snapping the photo
+            setTimeout(() => {
+                html2pdf().set(opt).from(reportContent).save().then(() => {
+                    // 3. Hide it again immediately after the snapshot is taken
+                    wrapper.classList.add('hidden');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }).catch(err => {
+                    console.error("PDF Generation Error:", err);
+                    wrapper.classList.add('hidden');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    alert("Failed to generate PDF document.");
+                });
+            }, 100); 
+        }
+
+function triggerReportModal(status) {
+            const displayStatus = status === 'active' ? 'Active' : 'Inactive';
+            showConfirmModal(
+                `Download ${displayStatus} Patients`, 
+                `Generate a PDF report containing only ${status} patient records?`, 
+                'download-report', 
+                { status: status }, 
+                false
+            );
+        }
+
+        async function downloadPatientReport(status) {
+            try {
+                showNoticeModal(true, "Generating...", `Compiling ${status} patient PDF report.`);
+                
+                // Pass the status to the backend as a query parameter
+                const urlEndpoint = `http://localhost:3000/api/admin/reports/patients?status=${status}`;
+                
+                const res = await fetch(urlEndpoint, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+                if (!res.ok) throw new Error("Failed");
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; 
+                
+                // Name the file based on the status chosen, and save as .pdf
+                const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1);
+                a.download = `Regional_Opticians_${capitalizedStatus}_Patients.csv`;
+                
+                document.body.appendChild(a); a.click(); a.remove(); closeNoticeModal();
+            } catch (error) { 
+                showNoticeModal(false, "Report Error", "Could not generate the PDF document."); 
+            }
+        }
+
+        // Charts
+        let utilizationChart = null; let clinicianChart = null; 
+        async function loadServiceUtilizationChart() {
+            try {
+                const res = await fetch('http://localhost:3000/api/admin/reports/service-utilization', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+                if (!res.ok) throw new Error("Failed to fetch chart data");
+                const data = await res.json();
+                if (data.length === 0) return;
+
+                const totalBookings = data.reduce((sum, item) => sum + item.count, 0);
+                const labels = data.map(item => `${item._id || 'Unspecified'} (${((item.count / totalBookings) * 100).toFixed(1)}%)`);
+                const counts = data.map(item => item.count);
+                const ctx = document.getElementById('serviceChart').getContext('2d');
+                if (utilizationChart) utilizationChart.destroy();
+                utilizationChart = new Chart(ctx, {
+                    type: 'doughnut', 
+                    data: { labels: labels, datasets: [{ data: counts, backgroundColor: ['#2563eb', '#0d9488', '#f59e0b', '#8b5cf6', '#ec4899'], borderWidth: 0, hoverOffset: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { family: "'Inter', sans-serif", weight: 'bold' }, padding: 20 } } } }
+                });
+            } catch (error) { console.error("Error drawing chart:", error); }
+        }
+
+        async function loadClinicianPerformanceChart() {
+            try {
+                const res = await fetch('http://localhost:3000/api/admin/reports/clinician-performance', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+                if (!res.ok) throw new Error("Failed to fetch clinician data");
+                const data = await res.json();
+                if (data.length === 0) return;
+
+                const labels = data.map(item => item.name);
+                const patientCounts = data.map(item => item.patientCount);
+                const ctx = document.getElementById('clinicianChart').getContext('2d');
+                if (clinicianChart) clinicianChart.destroy();
+                clinicianChart = new Chart(ctx, {
+                    type: 'bar', 
+                    data: { labels: labels, datasets: [{ label: 'Total Patients Seen', data: patientCounts, backgroundColor: '#0d9488', borderRadius: 4, barThickness: 40 }] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }, plugins: { legend: { display: false } } }
+                });
+            } catch (error) { console.error("Error drawing clinician chart:", error); }
+        }
+
+        // Initialize 
+        fetchServices(); fetchAdminData(); loadFinancials();
+        setInterval(fetchAdminData, 10000);
+    </script>
+</body>
+</html>

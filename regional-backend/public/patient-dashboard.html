@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Portal - Regional Opticians</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        // SAFETY VALVE 1: Role Guard
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('userRole');
+
+        if (!token || role !== 'patient') {
+            localStorage.clear(); 
+            window.location.href = "login.html";
+        }
+    </script>
+
+    <script>
+        tailwind.config = {
+           darkMode: 'class', 
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#2563eb', 
+                        'form-teal': '#0d9488', 
+                    },
+                    borderWidth: { '3': '3px' },
+                    screens: { 'max-desk': '1440px' }
+                }
+            }
+        }
+    </script>
+    <script>
+    // Run immediately to prevent flash of light theme
+    if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <style>
+        body { max-width: 1440px; margin: 0 auto; }
+        .sticky-col { position: sticky; left: 0; background-color: white; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .mpesa-green { background-color: #4CAF50; }
+        .mpesa-green-hover:hover { background-color: #45a049; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-slate-900 font-sans text-gray-800 dark:text-gray-200 min-h-screen flex flex-col relative overflow-x-hidden transition-colors duration-300">
+
+<nav class="bg-white dark:bg-slate-800 p-4 text-gray-800 dark:text-gray-200 shadow-sm border-b border-gray-100 dark:border-slate-700 z-20 relative transition-colors duration-300">
+        <div class="container mx-auto flex justify-between items-center">
+            
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded bg-primary-blue flex items-center justify-center font-bold text-white">RO</div>
+                <h1 class="text-xl font-bold text-primary-blue hidden sm:block uppercase tracking-tighter">Regional Opticians</h1>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="text-primary-blue font-semibold border-b-2 border-primary-blue pb-1">Dashboard</a>
+                <a href="book-appointment.html" class="text-gray-600 hover:text-primary-blue transition-colors font-medium">Book Appointment</a>
+                <a href="#" onclick="openEditProfileModal(); return false;" class="text-gray-600 hover:text-primary-blue transition-colors font-medium">Edit Profile</a>
+            </div>
+
+            <div class="hidden md:flex items-center gap-4">
+<button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors shadow-inner flex items-center justify-center" aria-label="Toggle Dark Mode">
+    <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+    <svg class="w-5 h-5 hidden dark:block text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+</button> 
+                <div class="flex items-center gap-2 pr-4 border-r border-gray-200">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-gray-100 shadow-sm">
+                    <span class="text-sm font-bold text-gray-700 hidden lg:block uppercase tracking-tight">Patient Access</span>
+                </div>
+                
+                <button onclick="handleLogout()" class="text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg font-black text-xs transition-all uppercase tracking-widest">
+                    log out
+                </button>
+            </div>
+            
+            <div class="flex items-center gap-3 md:hidden">
+                <button onclick="handleLogout()" class="text-red-600 font-black text-[10px] uppercase px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                    log out
+                </button>
+                <button id="mobileMenuBtn" class="text-gray-600 focus:outline-none p-1 rounded-lg hover:bg-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="mobileMenu" class="hidden md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-lg py-4 px-4 flex flex-col gap-2 z-50">
+            <a href="#" class="bg-primary-blue/10 text-primary-blue rounded-lg px-4 py-3 font-medium block">Dashboard</a>
+            <a href="book-appointment.html" class="text-gray-600 hover:bg-gray-50 rounded-lg px-4 py-3 block">Book Appointment</a>
+            <a href="#" onclick="openEditProfileModal(); return false;" class="text-gray-600 hover:bg-gray-50 rounded-lg px-4 py-3 block">Edit Profile</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-1">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+<h2 id="welcomeHeader" class="text-3xl font-black text-gray-900 dark:text-white tracking-tight transition-colors duration-300">Hello! 👋</h2>
+<p class="text-gray-500 dark:text-gray-300 mt-1 font-medium transition-colors duration-300">Here is a summary of your eye health and upcoming visits.</p>
+            </div>
+            <a href="book-appointment.html" class="bg-primary-blue hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg font-bold transition duration-200 flex items-center gap-2 uppercase text-sm tracking-wide">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002 2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                New Appointment
+            </a>
+        </div>
+
+<div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden mb-8 transition-colors duration-300">
+<div class="p-5 border-b border-gray-50 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-800 transition-colors duration-300">
+                <h3 class="text-sm font-black text-form-teal uppercase tracking-widest flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    Outstanding Bills
+                </h3>
+                <button onclick="openReceiptsModal()" class="text-xs font-bold text-primary-blue hover:text-blue-700 uppercase tracking-widest flex items-center gap-1 transition-colors">
+                    View Receipts <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+            
+            <div id="billingDetailsContainer" class="p-6 flex flex-col md:flex-row justify-between items-center gap-6">
+                <p class="text-gray-400 italic text-sm font-bold">Calculating account balance...</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 space-y-6">
+<div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 relative overflow-hidden transition-colors duration-300">
+                    <div class="absolute top-0 left-0 w-1.5 h-full bg-primary-blue"></div>
+                    <h3 class="block text-form-teal uppercase text-[10px] tracking-widest font-black mb-4">Next Appointment</h3>
+                    
+<div id="upcomingCard" class="bg-blue-50/50 dark:bg-slate-700/50 p-4 rounded-xl border border-blue-100 dark:border-slate-600 transition-colors duration-300">
+                        <p class="text-sm text-gray-400 italic">Checking for appointments...</p>
+                    </div>
+                    
+                    <div id="upcomingButtons" class="mt-5 flex gap-3 hidden">
+                        <button id="btnReschedule" class="flex-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-lg text-xs font-bold uppercase hover:bg-gray-50 transition-colors">Reschedule</button>
+                        <button id="btnCancel" class="flex-1 border border-red-100 text-red-600 py-2.5 rounded-lg text-xs font-bold uppercase hover:bg-red-50 transition-colors">Cancel</button>
+                    </div>
+                </div>
+
+<div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 transition-colors duration-300">
+                    <h3 class="block text-form-teal uppercase text-[10px] tracking-widest font-black mb-4">Current Eyewear (Rx)</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                            <span class="text-xs font-bold text-gray-400 uppercase">Right Eye (OD)</span>
+                            <span class="text-sm font-black text-gray-900">SPH -1.50 | CYL -0.50</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                            <span class="text-xs font-bold text-gray-400 uppercase">Left Eye (OS)</span>
+                            <span class="text-sm font-black text-gray-900">SPH -1.25 | CYL -0.25</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden flex flex-col h-full transition-colors duration-300">  
+                    <div class="p-6 border-b border-gray-100">
+                        <h3 class="block text-form-teal uppercase text-[10px] tracking-widest font-black mb-0">Visit History & Records</h3>
+                    </div>
+                    
+                    <div class="overflow-x-auto no-scrollbar flex-1">
+                        <table class="min-w-full text-left text-sm whitespace-nowrap">
+                             <thead class="bg-gray-50 dark:bg-slate-900/50 text-gray-400 dark:text-gray-300 text-[10px] uppercase tracking-widest font-black border-b border-gray-100 dark:border-slate-700 transition-colors duration-300">
+                                <tr>
+                                    <th class="px-6 py-4 sticky-col md:relative md:bg-gray-50">Date</th>
+                                    <th class="px-6 py-4">Diagnosis / Service</th>
+                                    <th class="px-6 py-4">Doctor</th>
+                                    <th class="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="text-gray-700"></tbody>
+                        </table>
+                    </div>
+                    
+                   <div class="px-6 py-4 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between mt-auto transition-colors duration-300">
+                        <span id="recordCount" class="text-gray-500 text-[10px] font-black uppercase">Syncing...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-gray-100 py-8 mt-8">
+        <div class="container mx-auto px-4 text-center text-gray-400 text-xs font-medium">
+            &copy; 2026 Regional Opticians Hospital, Githurai. All records securely encrypted.
+        </div>
+    </footer>
+
+    <div id="cancelModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 relative z-10 text-center border border-slate-100">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+                    <svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-black text-slate-900 mb-3 tracking-tight">Confirm Cancellation?</h3>
+                <p class="text-sm text-slate-500 mb-8 font-medium">This action will remove your scheduled appointment from the active list.</p>
+                <div class="flex flex-col gap-3">
+                    <button id="confirmCancelBtn" class="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all shadow-lg uppercase text-xs tracking-widest">Yes, Cancel Appointment</button>
+                    <button onclick="closeCancelModal()" class="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all uppercase text-xs tracking-widest">Keep Appointment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mpesaModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="closeMpesaModal()"></div>
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm relative z-10 overflow-hidden transform transition-all">
+            <div class="mpesa-green p-6 text-center">
+                <h3 class="text-xl font-black text-white tracking-tight uppercase">M-Pesa Express</h3>
+                <p class="text-green-100 text-[10px] uppercase font-black tracking-widest mt-1">Secure direct payment</p>
+            </div>
+            <div class="p-8">
+                <div class="text-center mb-6">
+                    <p class="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">Amount Due</p>
+                    <p id="modalAmountDisplay" class="text-3xl font-black text-gray-900">Ksh 0</p>
+                </div>
+                <form id="mpesaForm" onsubmit="processMpesaPayment(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">M-Pesa Phone Number</label>
+                        <div class="flex shadow-sm">
+                            <span class="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-gray-200 bg-gray-50 text-gray-600 font-bold">+254</span>
+                            <input type="text" id="mpesaPhone" maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required class="flex-1 min-w-0 block w-full px-4 py-3 rounded-none rounded-r-lg bg-gray-50 border border-gray-200 text-lg font-bold focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" placeholder="7XX XXX XXX">
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button type="button" onclick="closeMpesaModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors uppercase text-xs tracking-widest">Cancel</button>
+                        <button type="submit" id="payBtn" class="flex-[2] mpesa-green mpesa-green-hover text-white py-3 rounded-xl font-black shadow-md transition-colors flex items-center justify-center gap-2 uppercase text-xs tracking-widest">Send Prompt</button>
+                    </div>
+                </form>
+                <div id="paymentStatus" class="hidden mt-6 text-center p-4 rounded-xl"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="paymentSuccessModal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md"></div>
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm relative z-10 overflow-hidden text-center p-8 border border-green-100">
+            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6 animate-pulse">
+                <svg class="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <h3 class="text-2xl font-black text-slate-900 mb-2 tracking-tight">Payment Verified!</h3>
+            <p class="text-sm text-slate-500 mb-8 font-medium">Your transaction was successful. Your medical account has been updated and your receipt is now available.</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="closeSuccessAndRefresh()" class="w-full py-4 bg-primary-blue hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg uppercase text-xs tracking-widest">Return to Dashboard</button>
+                <button onclick="openReceiptsModal(); document.getElementById('paymentSuccessModal').classList.add('hidden');" class="w-full py-3 text-form-teal font-black uppercase text-[10px] tracking-widest hover:underline">View My Receipts</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="receiptsModal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+        <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onclick="closeReceiptsModal()"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 text-left overflow-hidden border border-slate-200">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-900">Payment History & Receipts</h3>
+                    <button type="button" onclick="closeReceiptsModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="max-h-[60vh] overflow-y-auto p-6">
+                    <div id="receiptsContainer" class="space-y-4">
+                        <p class="text-center text-gray-400 text-sm font-bold italic py-8">Loading payments...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="medicalRecordModal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+        <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onclick="closeMedicalRecordModal()"></div>
+        <div class="flex items-center justify-center min-h-screen p-4 pt-10 pb-20">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 text-left overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-form-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Clinical Record
+                    </h3>
+                    <button type="button" onclick="closeMedicalRecordModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="overflow-y-auto flex-1 bg-gray-50">
+                    <div id="printableRecord" class="bg-white m-4 p-8 rounded-xl shadow-sm border border-gray-100">
+                        <div id="medicalRecordContent">
+                            <p class="text-center text-gray-400 text-sm font-bold italic py-8 animate-pulse">Loading secure medical record...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 border-t border-slate-200 flex justify-between shrink-0">
+                    <button onclick="downloadRecordPDF()" class="px-6 py-2.5 bg-primary-blue hover:bg-blue-700 text-white rounded-xl font-bold transition-all text-xs uppercase tracking-widest shadow-md flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Download PDF
+                    </button>
+                    <button onclick="closeMedicalRecordModal()" class="px-6 py-2.5 bg-slate-800 hover:bg-black text-white rounded-xl font-bold transition-all text-xs uppercase tracking-widest shadow-md">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <div id="editProfileModal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+        <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onclick="closeEditProfileModal()"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md relative z-10 text-left overflow-hidden border border-slate-200 dark:border-slate-700 transition-colors duration-300">
+                <div class="p-6 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-gray-50 dark:bg-slate-900/50 transition-colors duration-300">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 transition-colors duration-300">
+                        <svg class="w-5 h-5 text-primary-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Edit My Profile
+                    </h3>
+                    <button type="button" onclick="closeEditProfileModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                
+                <div id="profileLoading" class="p-8 text-center text-gray-400 font-bold italic">Loading your details...</div>
+
+                <form id="editProfileForm" onsubmit="submitEditProfile(event)" class="p-6 space-y-4 hidden">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1 transition-colors">First Name</label>
+                            <input type="text" id="editFirstName" required class="w-full px-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 dark:text-white rounded-lg text-sm font-bold focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1 transition-colors">Last Name</label>
+                            <input type="text" id="editLastName" required class="w-full px-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 dark:text-white rounded-lg text-sm font-bold focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue transition-colors">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1 transition-colors">Phone Number (Locked)</label>
+                        <input type="text" id="editPhone" disabled class="w-full px-4 py-2 bg-gray-100 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-lg text-sm text-gray-500 dark:text-gray-400 font-bold cursor-not-allowed transition-colors">
+                        <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-1 uppercase transition-colors">Contact reception to change registered phone number.</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1 transition-colors">National ID</label>
+                            <input type="text" id="editNationalId" class="w-full px-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 dark:text-white rounded-lg text-sm font-bold focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1 transition-colors">Gender</label>
+                            <select id="editGender" class="w-full px-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 dark:text-white rounded-lg text-sm font-bold focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue transition-colors">
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1 transition-colors">Date of Birth</label>
+                        <input type="date" id="editDob" class="w-full px-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 dark:text-white [color-scheme:light] dark:[color-scheme:dark] rounded-lg text-sm font-bold focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue transition-colors">
+                    </div>
+
+                    <div class="pt-4 flex gap-3 border-t border-gray-100 dark:border-slate-700 mt-2 transition-colors">
+                        <button type="button" onclick="closeEditProfileModal()" class="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 py-3 rounded-lg font-bold text-sm transition-colors uppercase tracking-widest text-[11px]">Cancel</button>
+                        <button type="submit" id="saveProfileBtn" class="flex-1 bg-primary-blue hover:bg-blue-700 text-white py-3 rounded-lg font-bold text-sm transition-colors shadow-md uppercase tracking-widest text-[11px]">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="hidden">
+        <div id="printableReceipt" class="bg-white p-10 w-[800px] border border-gray-100">
+            <div class="flex justify-between items-center border-b-2 border-primary-blue pb-6 mb-6">
+                <div>
+                    <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase">Regional Opticians</h1>
+                    <p class="text-[10px] text-primary-blue font-black uppercase tracking-widest mt-1">Official Payment Receipt</p>
+                </div>
+                <div class="text-right">
+                    <p id="pdfDate" class="text-sm font-bold text-gray-900"></p>
+                    <p id="pdfTime" class="text-xs font-bold text-gray-400 uppercase"></p>
+                </div>
+            </div>
+            <div class="flex justify-between mb-8">
+                <div>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Patient Name</p>
+                    <p id="pdfPatientName" class="text-md font-black text-gray-800"></p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">M-Pesa Receipt Number</p>
+                    <p id="pdfReceiptCode" class="text-md font-black text-form-teal"></p>
+                </div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Services Rendered</p>
+                <p id="pdfServicesList" class="text-sm font-bold text-gray-700 leading-relaxed italic"></p>
+            </div>
+            <div class="flex justify-between items-center border-t-2 border-gray-100 pt-6 pb-6">
+                <p class="text-sm font-black text-gray-500 uppercase">Total Amount Paid</p>
+                <p id="pdfAmount" class="text-3xl font-black text-primary-blue"></p>
+            </div>
+            <div class="text-center mt-6 pt-6 border-t border-gray-100">
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Thank you for choosing Regional Opticians</p>
+                <p class="text-[10px] text-gray-500 mt-1 uppercase">info@regionalopticians.co.ke</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        mobileMenuBtn.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+
+        const userName = localStorage.getItem('userName');
+        if (userName) {
+            const cleanName = userName.replace(/^(Dr\.|Dr|Mr\.|Mr|Mrs\.|Mrs|Ms\.|Ms)\s+/i, '');
+            const firstName = cleanName.split(' ')[0]; 
+            document.getElementById('welcomeHeader').innerText = `Hello, ${firstName}! 👋`;
+        }
+
+        let servicePrices = {}; 
+        window.currentBillAmount = 0; 
+        window.currentBillServices = ""; 
+        window.currentUnpaidAppointmentIds = []; 
+        window.currentPollingInterval = null; 
+
+        async function loadAppointments() {
+            try {
+                try {
+                    const priceRes = await fetch('http://localhost:3000/api/services');
+                    if (priceRes.ok) {
+                        const priceData = await priceRes.json();
+                        priceData.forEach(s => servicePrices[s.name] = s.price);
+                    }
+                } catch (e) {
+                    console.error("Could not fetch prices, using fallbacks.");
+                }
+
+                const [appRes, recRes] = await Promise.all([
+                    fetch('http://localhost:3000/api/appointments/my-appointments', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('http://localhost:3000/api/mpesa/my-receipts', { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+                
+                const appointments = await appRes.json();
+                const receipts = await recRes.json();
+
+                if (appRes.ok) { 
+                    updateDashboard(appointments, receipts); 
+                } else if (appRes.status === 401) {
+                    handleLogout(); 
+                }
+            } catch (error) { 
+                console.error("Dashboard error:", error); 
+                document.getElementById('recordCount').innerText = "OFFLINE: Check Server Connection";
+            }
+        }
+
+        function updateDashboard(appointments, receipts) {
+            const upcomingContainer = document.getElementById('upcomingCard');
+            const upcomingButtons = document.getElementById('upcomingButtons');
+            const tableBody = document.getElementById('historyTableBody');
+            const countLabel = document.getElementById('recordCount');
+            const billingContainer = document.getElementById('billingDetailsContainer');
+
+            tableBody.innerHTML = "";
+            
+            // --- Identify both Pending and Scheduled as "Active" ---
+            const activeAppointments = appointments.filter(a => a.status === 'scheduled' || a.status === 'pending');
+            const scheduledOnly = appointments.filter(a => a.status === 'scheduled');
+            const pendingOnly = appointments.filter(a => a.status === 'pending');
+
+            let paidAppointmentIds = [];
+            if(receipts && receipts.length > 0) {
+                receipts.forEach(r => {
+                    if(r.appointmentIds && r.appointmentIds.length > 0) {
+                        paidAppointmentIds.push(...r.appointmentIds);
+                    }
+                });
+            }
+
+            // --- SMART BILLING: Only calculate bills for officially SCHEDULED appointments ---
+            const unpaidScheduled = scheduledOnly.filter(app => !paidAppointmentIds.includes(app._id));
+
+            window.currentBillAmount = 0;
+            let billItems = [];
+            window.currentUnpaidAppointmentIds = [];
+
+            unpaidScheduled.forEach(app => {
+                window.currentUnpaidAppointmentIds.push(app._id);
+                const bookedServicesArray = app.service.split(', ');
+                bookedServicesArray.forEach(serviceName => {
+                    const price = servicePrices[serviceName] || 2500; 
+                    window.currentBillAmount += price;
+                    billItems.push(serviceName);
+                });
+            });    
+            
+            window.currentBillServices = [...new Set(billItems)].join(', ');
+
+            // --- CONDITIONAL BILLING DISPLAY ---
+            if (window.currentBillAmount === 0) {
+                if (pendingOnly.length > 0) {
+                    // Show Pending Message (Hide M-Pesa Button)
+                    billingContainer.innerHTML = `
+                        <div class="flex items-center gap-4 text-yellow-600">
+                            <div class="p-3 bg-yellow-50 rounded-full border border-yellow-100">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-xl font-black text-gray-800">Pending Approval</p>
+                                <p class="text-xs font-bold uppercase tracking-widest mt-1 opacity-70">Payment opens after doctor confirmation</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Fully Cleared
+                    billingContainer.innerHTML = `
+                        <div class="flex items-center gap-4 text-green-600">
+                            <div class="p-3 bg-green-50 rounded-full">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-xl font-black text-gray-800">Account Cleared</p>
+                                <p class="text-xs font-bold uppercase tracking-widest mt-1 opacity-70">You have no pending payments.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                // Show standard M-Pesa Button
+                billingContainer.innerHTML = `
+                    <div>
+                        <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mb-1 truncate max-w-xs" title="${window.currentBillServices}">${window.currentBillServices}</p>
+                        <p class="text-3xl font-black text-gray-900">Ksh ${window.currentBillAmount.toLocaleString()}</p>
+                        <p class="text-[10px] text-red-500 font-black mt-2 bg-red-50 inline-block px-2 py-1 rounded uppercase tracking-widest">Due Before Visit</p>
+                    </div>
+                    <button onclick="openMpesaModal()" class="w-full md:w-auto mpesa-green mpesa-green-hover text-white px-8 py-3.5 rounded-xl font-black text-sm shadow-md transition-all flex items-center justify-center gap-2 uppercase tracking-wide">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        Pay with M-Pesa
+                    </button>
+                `;
+            }
+
+            // --- UPCOMING APPOINTMENT CARD ---
+            if (activeAppointments.length === 0) {
+                upcomingContainer.innerHTML = `<p class="text-xs text-slate-400 font-bold italic uppercase tracking-tighter">No upcoming visits found.</p>`;
+                upcomingButtons.classList.add('hidden');
+            } else {
+                // Show the most recent upcoming appointment (could be pending or scheduled)
+                const topRecord = activeAppointments[0];
+                upcomingButtons.classList.remove('hidden');
+
+                const isPaid = paidAppointmentIds.includes(topRecord._id);
+                const paidBadge = isPaid ? `<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[9px] font-black uppercase ml-2 tracking-widest">Paid</span>` : '';
+                
+                // Add a small inline status badge if it's pending so the user understands why they can't pay
+                const pendingBadge = topRecord.status === 'pending' ? `<span class="text-yellow-600 text-[10px] font-black uppercase tracking-widest ml-2 italic">(Pending)</span>` : '';
+
+                upcomingContainer.innerHTML = `
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-white p-2.5 rounded-xl shadow-sm text-primary-blue border border-blue-50">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-black text-slate-900 tracking-tight flex items-center">${topRecord.service} ${paidBadge} ${pendingBadge}</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">${topRecord.doctor}</p>
+                        </div>
+                    </div>
+                    <div class="border-t border-blue-100/50 pt-3">
+                        <p class="text-xl font-black text-primary-blue leading-none">${topRecord.date}</p>
+                        <p class="text-[11px] text-slate-500 font-black mt-2 uppercase tracking-widest">${topRecord.time}</p>
+                    </div>
+                `;
+
+                document.getElementById('btnReschedule').onclick = () => { window.location.href = `book-appointment.html?edit=${topRecord._id}`; };
+                document.getElementById('btnCancel').onclick = () => openCancelModal(topRecord._id);
+            }
+
+            // --- HISTORY TABLE ---
+            if (appointments.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-16 text-center text-slate-300 font-bold italic uppercase tracking-widest">No medical records found.</td></tr>`;
+            } else {
+                const tableData = [...appointments].reverse();
+
+                tableData.forEach(app => {
+                    let actionHtml = '';
+
+                    // Patients can cancel both Scheduled AND Pending appointments
+                    if (app.status === 'scheduled' || app.status === 'pending') {
+                        actionHtml = `<button onclick="openCancelModal('${app._id}')" class="text-red-400 hover:text-red-600 text-[10px] font-black uppercase tracking-widest">Cancel</button>`;
+                    } else if (app.status === 'completed') {
+                        actionHtml = `
+                            <button onclick="viewMedicalRecord('${app._id}')" class="bg-form-teal/10 text-form-teal hover:bg-form-teal hover:text-white border border-teal-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all shadow-sm flex items-center gap-1 ml-auto">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Record
+                            </button>
+                        `;
+                    } else {
+                        actionHtml = `<span class="text-slate-300 text-[10px] font-black uppercase italic tracking-widest">Closed</span>`;
+                    }
+
+const row = `
+                        <tr class="border-b border-gray-50 dark:border-slate-700 hover:bg-gray-50/50 dark:hover:bg-slate-700/50 transition-colors">
+                            <td class="px-6 py-5 font-black text-slate-900 dark:text-white text-xs">${app.date}</td>
+                            <td class="px-6 py-5">
+                                <p class="font-bold text-slate-800 dark:text-gray-200 text-sm">${app.service}</p>
+                                <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${getStatusBadgeStyle(app.status)}">${app.status}</span>
+                            </td>
+                            <td class="px-6 py-5 text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-tighter">${app.doctor}</td>
+                            <td class="px-6 py-5 text-right">
+                                ${actionHtml}
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            }
+            countLabel.innerText = `${appointments.length} TOTAL RECORDS FOUND`;
+        }
+
+        // Added the yellow 'pending' badge styling!
+        function getStatusBadgeStyle(status) {
+            if (status === 'cancelled') return 'bg-red-50 text-red-500 border border-red-100';
+            if (status === 'scheduled') return 'bg-blue-50 text-blue-600 border border-blue-100';
+            if (status === 'pending') return 'bg-yellow-50 text-yellow-600 border border-yellow-100';
+            if (status === 'completed') return 'bg-green-50 text-green-600 border border-green-100';
+            return 'bg-gray-50 text-gray-500';
+        }
+
+        async function viewMedicalRecord(appId) {
+            document.getElementById('medicalRecordModal').classList.remove('hidden');
+            const contentDiv = document.getElementById('medicalRecordContent');
+            contentDiv.innerHTML = '<p class="text-center text-gray-400 font-bold py-8 animate-pulse">Fetching secure clinical record...</p>';
+
+            try {
+                const res = await fetch(`http://localhost:3000/api/records/appointment/${appId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!res.ok) {
+                    if (res.status === 404) throw new Error("Doctor has not finalized notes for this visit yet.");
+                    throw new Error("Access denied or record not found.");
+                }
+                const record = await res.json();
+                
+                contentDiv.innerHTML = `
+                    <div class="border-b-2 border-form-teal pb-6 mb-6 flex justify-between items-center">
+                        <div>
+                            <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tighter">Regional Opticians</h1>
+                            <p class="text-[10px] text-form-teal font-black uppercase tracking-widest mt-1">Official Clinical Record</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-gray-900">${new Date(record.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Ref: ${record._id.substring(18)}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">1. Diagnosis & Assessment</h4>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                <p class="text-sm text-slate-800 mb-2"><span class="font-bold text-slate-900">Diagnosis:</span> ${record.diagnosis || 'N/A'}</p>
+                                <p class="text-sm text-slate-800"><span class="font-bold text-slate-900">Chief Complaint:</span> ${record.chiefComplaint || 'N/A'}</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">2. Visual Acuity</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Right Eye (OD)</p>
+                                    <p class="text-lg font-black text-slate-900 mt-1">20 / ${record.visualAcuity?.OD || '--'}</p>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Left Eye (OS)</p>
+                                    <p class="text-lg font-black text-slate-900 mt-1">20 / ${record.visualAcuity?.OS || '--'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">3. Optical Prescription (Rx)</h4>
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-100 text-xs text-gray-600 uppercase tracking-wider">
+                                        <tr>
+                                            <th class="px-4 py-3 font-bold">Eye</th>
+                                            <th class="px-4 py-3 font-bold">SPH</th>
+                                            <th class="px-4 py-3 font-bold">CYL</th>
+                                            <th class="px-4 py-3 font-bold">AXIS</th>
+                                            <th class="px-4 py-3 font-bold">ADD</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        <tr>
+                                            <td class="px-4 py-3 font-bold text-gray-800 bg-gray-50/50">OD (Right)</td>
+                                            <td class="px-4 py-3 font-medium">${record.prescription?.OD?.sph || '--'}</td>
+                                            <td class="px-4 py-3 font-medium">${record.prescription?.OD?.cyl || '--'}</td>
+                                            <td class="px-4 py-3 font-medium">${record.prescription?.OD?.axis || '--'}</td>
+                                            <td class="px-4 py-3 font-medium">${record.prescription?.OD?.add || '--'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 font-bold text-gray-800 bg-gray-50/50">OS (Left)</td>
+                                            <td class="px-4 py-3 font-medium">${record.prescription?.OS?.sph || '--'}</td>
+                                            <td class="px-4 py-3 font-medium">${record.prescription?.OS?.cyl || '--'}</td>
+                                            <td class="px-4 py-3 font-medium">${record.prescription?.OS?.axis || '--'}</td>
+                                            <td class="px-4 py-3 font-medium">${record.prescription?.OS?.add || '--'}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="text-xs font-bold text-gray-500 mt-2 text-right">Pupillary Distance (PD): <span class="text-slate-900">${record.prescription?.pd || '--'} mm</span></p>
+                        </div>
+
+                        <div>
+                            <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">4. Doctor's Notes</h4>
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                <p class="text-sm text-blue-900 italic font-medium leading-relaxed">${record.treatmentNotes || 'No additional notes provided.'}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+            } catch (err) {
+                contentDiv.innerHTML = `<div class="text-center py-8"><p class="text-red-500 font-bold mb-2">Error</p><p class="text-sm text-gray-500">${err.message}</p></div>`;
+            }
+        }
+
+        function closeMedicalRecordModal() { 
+            document.getElementById('medicalRecordModal').classList.add('hidden'); 
+        }
+
+        function generatePDF(elementId, filename) {
+            const originalContent = document.getElementById(elementId);
+            
+            const overlay = document.createElement('div');
+            overlay.className = "fixed inset-0 z-[999998] bg-white flex flex-col items-center justify-center";
+            overlay.innerHTML = `
+                <svg class="animate-spin h-12 w-12 text-primary-blue mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Generating PDF Document...</h2>
+                <p class="text-sm font-bold text-slate-500 mt-2 uppercase tracking-widest">Please Wait</p>
+            `;
+            document.body.appendChild(overlay);
+
+            const printWrapper = document.createElement('div');
+            printWrapper.className = "fixed inset-0 z-[999999] overflow-y-auto bg-gray-100 flex justify-center py-10";
+            
+            const clone = originalContent.cloneNode(true);
+            clone.className = "bg-white p-12 shadow-2xl border border-gray-300"; 
+            clone.style.width = "800px"; 
+            clone.style.height = "fit-content";
+            
+            printWrapper.appendChild(clone);
+            document.body.appendChild(printWrapper);
+
+            const oldBodyClasses = document.body.className;
+            document.body.classList.remove('overflow-x-hidden', 'overflow-hidden');
+            window.scrollTo(0, 0);
+
+            const opt = {
+                margin:       0.2, 
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 1 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            setTimeout(() => {
+                html2pdf().set(opt).from(clone).save().then(() => {
+                    document.body.removeChild(printWrapper);
+                    document.body.removeChild(overlay);
+                    document.body.className = oldBodyClasses;
+                }).catch(err => {
+                    console.error("PDF Error:", err);
+                    document.body.removeChild(printWrapper);
+                    document.body.removeChild(overlay);
+                    document.body.className = oldBodyClasses;
+                    alert("Error generating PDF.");
+                });
+            }, 500);
+        }
+
+        function downloadRecordPDF() {
+            generatePDF('printableRecord', `RO_Clinical_Record_${new Date().getTime()}.pdf`);
+        }
+
+        function downloadReceiptPDF(receiptCode, amount, dateIso, services) {
+            const d = new Date(dateIso);
+            document.getElementById('pdfPatientName').innerText = userName || "Walk-in Patient";
+            document.getElementById('pdfReceiptCode').innerText = receiptCode;
+            document.getElementById('pdfAmount').innerText = `Ksh ${parseInt(amount).toLocaleString()}`;
+            document.getElementById('pdfServicesList').innerText = services;
+            document.getElementById('pdfDate').innerText = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+            document.getElementById('pdfTime').innerText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            generatePDF('printableReceipt', `RO_Receipt_${receiptCode}.pdf`);
+        }
+
+        function openCancelModal(id) { appointmentIdToCancel = id; document.getElementById('cancelModal').classList.remove('hidden'); }
+        function closeCancelModal() { appointmentIdToCancel = null; document.getElementById('cancelModal').classList.add('hidden'); }
+
+        document.getElementById('confirmCancelBtn').onclick = async function() {
+            if (!appointmentIdToCancel) return;
+            try {
+                const response = await fetch(`http://localhost:3000/api/appointments/${appointmentIdToCancel}/cancel`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    closeCancelModal();
+                    loadAppointments(); 
+                } else { alert("Failed to cancel."); }
+            } catch (err) { alert("Network Error"); }
+        };
+
+        function openMpesaModal() {
+            if(window.currentBillAmount === 0) return;
+            document.getElementById('modalAmountDisplay').innerText = `Ksh ${window.currentBillAmount.toLocaleString()}`;
+            document.getElementById('mpesaModal').classList.remove('hidden');
+            document.getElementById('mpesaForm').classList.remove('hidden');
+            document.getElementById('paymentStatus').classList.add('hidden');
+        }
+
+        function closeMpesaModal() {
+            document.getElementById('mpesaModal').classList.add('hidden');
+            if (window.currentPollingInterval) clearInterval(window.currentPollingInterval);
+        }
+
+        function showPaymentSuccess() { document.getElementById('paymentSuccessModal').classList.remove('hidden'); }
+        function closeSuccessAndRefresh() { document.getElementById('paymentSuccessModal').classList.add('hidden'); loadAppointments(); }
+
+        async function processMpesaPayment(e) {
+            e.preventDefault();
+            const btn = document.getElementById('payBtn');
+            const phoneInput = document.getElementById('mpesaPhone').value;
+            const statusDiv = document.getElementById('paymentStatus');
+
+            const formattedPhone = `254${phoneInput}`;
+            btn.innerHTML = `Sending...`;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('http://localhost:3000/api/mpesa/stkpush', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        phone: formattedPhone, 
+                        amount: window.currentBillAmount.toString(),
+                        services: window.currentBillServices, 
+                        appointmentIds: window.currentUnpaidAppointmentIds 
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('mpesaForm').classList.add('hidden');
+                    statusDiv.classList.remove('hidden');
+                    statusDiv.className = "mt-6 text-center p-6 rounded-xl bg-green-50 border border-green-200";
+                    statusDiv.innerHTML = `<svg class="w-12 h-12 text-green-500 mx-auto mb-3 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg><h4 class="font-black text-green-700">Check Your Phone!</h4><p class="text-[10px] uppercase font-black text-green-600 mt-2">Waiting for PIN confirmation...</p>`;
+
+                    window.currentPollingInterval = setInterval(async () => {
+                        const statusRes = await fetch(`http://localhost:3000/api/mpesa/status/${data.merchantRequestId}`);
+                        const statusData = await statusRes.json();
+                        if (statusData.status === 'Completed') {
+                            clearInterval(window.currentPollingInterval);
+                            new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3').play().catch(() => {});
+                            closeMpesaModal();
+                            showPaymentSuccess();
+                        } else if (statusData.status === 'Failed') {
+                            clearInterval(window.currentPollingInterval);
+                            alert("Transaction Cancelled.");
+                            closeMpesaModal();
+                        }
+                    }, 3000);
+                } else { throw new Error(data.message || "Failed to trigger payment."); }
+            } catch(err) {
+                alert(err.message);
+                btn.innerText = "Send Prompt";
+                btn.disabled = false;
+            }
+        }
+
+        async function openReceiptsModal() {
+            document.getElementById('receiptsModal').classList.remove('hidden');
+            const container = document.getElementById('receiptsContainer');
+            container.innerHTML = `<p class="text-center text-gray-400 text-sm font-bold py-8">Fetching records...</p>`;
+
+            try {
+                const res = await fetch('http://localhost:3000/api/mpesa/my-receipts', { headers: { 'Authorization': `Bearer ${token}` } });
+                const receipts = await res.json();
+                
+                if(receipts.length === 0) {
+                    container.innerHTML = `<p class="text-center text-gray-400 text-sm font-bold py-8">No payment records found.</p>`;
+                    return;
+                }
+
+                container.innerHTML = receipts.map(r => {
+                    const safeDate = new Date(r.date || r.createdAt).toISOString();
+                    const safeServices = r.services ? r.services.replace(/'/g, "\\'") : "General Eye Care Services";
+                    
+                    return `
+                    <div class="flex justify-between items-center p-4 bg-gray-50 border border-gray-100 rounded-xl mb-3">
+                        <div>
+                            <p class="font-black text-slate-900">Ksh ${r.amount.toLocaleString()}</p>
+                            <p class="text-[10px] text-gray-500 font-bold uppercase mt-1">Receipt: <span class="text-form-teal">${r.receiptNumber}</span></p>
+                            <p class="text-[10px] text-primary-blue font-bold uppercase truncate max-w-[200px] mt-0.5">${r.services || 'General Services'}</p>
+                        </div>
+                        <button onclick="downloadReceiptPDF('${r.receiptNumber}', '${r.amount}', '${safeDate}', '${safeServices}')" 
+                            class="bg-primary-blue/10 text-primary-blue px-4 py-2 rounded-lg text-xs font-black uppercase">
+                            Download PDF
+                        </button>
+                    </div>`
+                }).join('');
+            } catch (err) {
+                container.innerHTML = `<p class="text-center text-red-500 text-sm font-bold py-8">Error loading receipts.</p>`;
+            }
+        }
+
+        function closeReceiptsModal() { document.getElementById('receiptsModal').classList.add('hidden'); }
+
+        function handleLogout() { localStorage.clear(); window.location.href = "login.html"; }
+        function toggleDarkMode() {
+    const html = document.documentElement;
+    if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+    } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+    }
+}
+
+        // --- PROFILE EDIT LOGIC ---
+        async function openEditProfileModal() {
+            document.getElementById('mobileMenu').classList.add('hidden'); // Close mobile menu if open
+            document.getElementById('editProfileModal').classList.remove('hidden');
+            document.getElementById('editProfileForm').classList.add('hidden');
+            document.getElementById('profileLoading').classList.remove('hidden');
+
+            try {
+                // Fetch the freshest data from the server
+                const res = await fetch('http://localhost:3000/api/auth/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("Failed to load profile");
+                const userData = await res.json();
+
+                // Populate the form fields
+                document.getElementById('editFirstName').value = userData.firstName || '';
+                document.getElementById('editLastName').value = userData.lastName || '';
+                document.getElementById('editPhone').value = userData.phone || ''; 
+                
+                if (userData.patientProfile) {
+                    document.getElementById('editNationalId').value = userData.patientProfile.nationalId || '';
+                    if (userData.patientProfile.dob) {
+                        const d = new Date(userData.patientProfile.dob);
+                        document.getElementById('editDob').value = d.toISOString().split('T')[0];
+                    }
+                    document.getElementById('editGender').value = userData.patientProfile.gender?.toLowerCase() || '';
+                }
+
+                document.getElementById('profileLoading').classList.add('hidden');
+                document.getElementById('editProfileForm').classList.remove('hidden');
+                
+            } catch (err) {
+                alert("Error loading profile. Check your connection.");
+                closeEditProfileModal();
+            }
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('editProfileModal').classList.add('hidden');
+        }
+
+        async function submitEditProfile(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveProfileBtn');
+            const originalText = btn.innerText;
+            btn.innerText = "SAVING...";
+            btn.disabled = true;
+
+            const payload = {
+                firstName: document.getElementById('editFirstName').value,
+                lastName: document.getElementById('editLastName').value,
+                nationalId: document.getElementById('editNationalId').value,
+                dob: document.getElementById('editDob').value,
+                gender: document.getElementById('editGender').value
+            };
+
+            try {
+                const res = await fetch('http://localhost:3000/api/auth/profile', {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    // Update greeting if they changed their first name!
+                    localStorage.setItem('userName', data.user.firstName);
+                    document.getElementById('welcomeHeader').innerText = `Hello, ${data.user.firstName}! 👋`;
+                    alert("Profile updated successfully!");
+                    closeEditProfileModal();
+                } else {
+                    alert(data.message || "Failed to update profile.");
+                }
+            } catch (err) {
+                alert("Network error while updating profile.");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        loadAppointments();
+    </script>
+</body>
+</html>

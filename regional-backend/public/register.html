@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regional Opticians - Patient Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary-blue': '#2563eb', 
+                        'form-teal': '#00a896', 
+                        'bg-light-blue': '#f4f9fd', 
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-sans text-gray-800 min-h-screen w-full flex flex-col items-center justify-center py-10 px-4 bg-bg-light-blue relative overflow-x-hidden">
+
+    <div class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] w-full max-w-[550px] relative z-10 overflow-hidden min-h-[500px] flex">
+        
+        <div id="registerView" class="p-8 sm:p-10 w-full transition-all duration-300 transform translate-x-0 opacity-100 shrink-0">
+            
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-1">Create an Account</h2>
+                <p class="text-gray-500 text-sm">Register as a new patient</p>
+            </div>
+
+            <form class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5" onsubmit="handleSignup(event)">
+                
+                <div>
+                    <label class="block text-[11px] font-bold text-form-teal uppercase tracking-wide mb-1.5">First Name</label>
+                    <input type="text" id="regFirstName" required placeholder="e.g. Nkunja" class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-form-teal uppercase tracking-wide mb-1.5">Last Name</label>
+                    <input type="text" id="regLastName" required placeholder="e.g. Kinyua" class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-form-teal uppercase tracking-wide mb-1.5">Phone Number</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 text-sm text-gray-600 bg-gray-100 border border-r-0 border-gray-200 rounded-l-lg font-bold">
+                            +254
+                        </span>
+                        <input type="text" id="regPhone" name="phone" autocomplete="username" required maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="712345678" class="w-full border border-gray-200 rounded-r-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400">
+                    </div>
+                    <p id="phoneError" class="text-red-500 text-[11px] mt-1 hidden font-medium"></p>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-form-teal uppercase tracking-wide mb-1.5">National ID</label>
+                    <input type="text" id="regId" name="nationalId" autocomplete="off" required maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="ID Number" class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400">
+                    <p id="idError" class="text-red-500 text-[11px] mt-1 hidden font-medium"></p>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-form-teal uppercase tracking-wide mb-1.5">Date of Birth</label>
+                    <input type="date" id="regDob" required class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-500">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-form-teal uppercase tracking-wide mb-1.5">Gender</label>
+                    <select id="regGender" required class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-500 appearance-none bg-white">
+                        <option value="" disabled selected>Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-form-teal uppercase tracking-wide mb-1.5">Password</label>
+                    <div class="relative">
+                        <input type="password" id="regPass" name="password" autocomplete="new-password" required placeholder="••••••••" class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400 pr-10">
+                        <button type="button" onclick="togglePassword('regPass', 'eyeIconPass')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <svg id="eyeIconPass" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-form-teal uppercase tracking-wide mb-1.5">Confirm Password</label>
+                    <div class="relative">
+                        <input type="password" id="regConfirmPass" required placeholder="••••••••" class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400 pr-10">
+                        <button type="button" onclick="togglePassword('regConfirmPass', 'eyeIconConfirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <svg id="eyeIconConfirm" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="passError" class="text-red-500 text-[11px] mt-1 hidden font-medium"></p>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <p id="serverError" class="text-red-500 text-[13px] text-center hidden font-semibold bg-red-50 p-2 rounded"></p>
+                </div>
+
+                <div class="sm:col-span-2 mt-2">
+                    <button type="submit" id="regBtn" class="w-full bg-[#1e5de6] hover:bg-blue-700 text-white font-semibold py-3.5 rounded-lg transition-colors duration-200 shadow-md">
+                        Send Verification Code
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center mt-6">
+                <p class="text-sm text-gray-600">Already have an account? <a href="login.html" class="text-[#1e5de6] font-semibold hover:underline">Sign In here</a></p>
+            </div>
+        </div>
+
+        <div id="otpView" class="absolute inset-0 p-8 sm:p-10 w-full h-full bg-white transition-all duration-300 transform translate-x-full opacity-0 hidden flex-col justify-center shrink-0">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-teal-50 text-form-teal mb-4">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Verify Phone</h2>
+                <p class="text-gray-500 text-sm leading-relaxed">We sent a 4-digit security code to <br><span id="displayPhone" class="font-bold text-gray-800"></span></p>
+            </div>
+
+            <form class="space-y-6" onsubmit="handleVerify(event)">
+                <div>
+                    <input type="text" id="otpCode" required maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="0000" class="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-center text-3xl tracking-[1em] font-black focus:outline-none focus:border-form-teal focus:ring-0 text-gray-800">
+                </div>
+
+                <p id="otpError" class="text-red-500 text-[13px] text-center hidden font-semibold bg-red-50 p-2 rounded"></p>
+                <p id="otpSuccess" class="text-form-teal text-[13px] text-center hidden font-semibold bg-teal-50 p-2 rounded">Verified! Redirecting to dashboard...</p>
+
+                <button type="submit" id="verifyBtn" class="w-full bg-form-teal hover:bg-teal-700 text-white font-bold py-3.5 rounded-lg transition-colors duration-200 shadow-md">
+                    Verify Account
+                </button>
+                
+                <div class="text-center mt-4">
+                    <p class="text-sm text-gray-500">Didn't receive the code? 
+                        <button type="button" id="resendBtn" onclick="handleResendOTP()" disabled class="text-gray-400 font-bold disabled:cursor-not-allowed transition-colors">
+                            Resend in <span id="timerSpan">30</span>s
+                        </button>
+                    </p>
+                </div>
+                
+                <button type="button" onclick="resetForm()" class="w-full text-gray-400 hover:text-gray-600 font-bold text-xs uppercase tracking-widest mt-4 transition-colors">
+                    ← Change Phone Number
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+    <div class="mt-8 text-center">
+        <p class="text-xs text-gray-400">© 2026 Regional Opticians Hospital, Githurai.</p>
+    </div>
+
+    <script>
+        let registeredPhone = "";
+        let resendTimerInterval;
+
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />';
+            } else {
+                input.type = 'password';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />';
+            }
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault(); 
+
+            // Extract the new split name fields
+            const firstName = document.getElementById('regFirstName').value;
+            const lastName = document.getElementById('regLastName').value;
+            const rawPhone = document.getElementById('regPhone').value;
+            const nationalId = document.getElementById('regId').value;
+            const password = document.getElementById('regPass').value;
+            const confirmPassword = document.getElementById('regConfirmPass').value;
+            const dob = document.getElementById('regDob').value;
+            const gender = document.getElementById('regGender').value;
+            const btn = document.getElementById('regBtn');
+
+            document.getElementById('phoneError').classList.add('hidden');
+            document.getElementById('idError').classList.add('hidden');
+            document.getElementById('passError').classList.add('hidden');
+            document.getElementById('serverError').classList.add('hidden');
+
+            let isValid = true;
+
+            if (rawPhone.length !== 9 || !(rawPhone.startsWith('7') || rawPhone.startsWith('1'))) {
+                const pErr = document.getElementById('phoneError');
+                pErr.innerText = "Enter valid 9 digits (e.g., 712345678)";
+                pErr.classList.remove('hidden');
+                isValid = false;
+            }
+
+            if (nationalId.length < 8) {
+                const iErr = document.getElementById('idError');
+                iErr.innerText = "Incorrect ID NO.";
+                iErr.classList.remove('hidden');
+                isValid = false;
+            }
+
+            if (password !== confirmPassword) {
+                const passErr = document.getElementById('passError');
+                passErr.innerText = "Passwords do not match.";
+                passErr.classList.remove('hidden');
+                isValid = false;
+            }
+
+            if (!isValid) return; 
+
+            registeredPhone = '+254' + rawPhone;
+
+            // Updated payload to match backend
+            const patientData = {
+                firstName: firstName,
+                lastName: lastName,
+                phone: registeredPhone,
+                nationalId: nationalId,
+                password: password,
+                dateOfBirth: dob,
+                gender: gender
+            };
+
+            btn.innerText = "Sending Code...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(patientData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('displayPhone').innerText = registeredPhone;
+                    
+                    const regView = document.getElementById('registerView');
+                    const otpView = document.getElementById('otpView');
+                    
+                    regView.classList.replace('translate-x-0', '-translate-x-full');
+                    regView.classList.replace('opacity-100', 'opacity-0');
+                    setTimeout(() => regView.classList.add('hidden'), 300);
+
+                    otpView.classList.remove('hidden');
+                    setTimeout(() => {
+                        otpView.classList.replace('translate-x-full', 'translate-x-0');
+                        otpView.classList.replace('opacity-0', 'opacity-100');
+                    }, 50);
+                    
+                    // NEW: Start the countdown timer
+                    startResendTimer();
+                } else {
+                    const serverErr = document.getElementById('serverError');
+                    serverErr.innerText = result.message;
+                    serverErr.classList.remove('hidden');
+                    btn.innerText = "Send Verification Code";
+                    btn.disabled = false;
+                }
+
+            } catch (error) {
+                console.error("Connection error:", error);
+                const serverErr = document.getElementById('serverError');
+                serverErr.innerText = "Failed to connect to the server.";
+                serverErr.classList.remove('hidden');
+                btn.innerText = "Send Verification Code";
+                btn.disabled = false;
+            }
+        }
+
+        async function handleVerify(event) {
+            event.preventDefault();
+            
+            const otp = document.getElementById('otpCode').value;
+            const errorContainer = document.getElementById('otpError');
+            const successContainer = document.getElementById('otpSuccess');
+            const btn = document.getElementById('verifyBtn');
+
+            errorContainer.classList.add('hidden');
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: registeredPhone, otp: otp })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // NEW: AUTO-LOGIN Logic! Save token, redirect to dashboard.
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('userName', result.firstName); // Using first name for a friendly greeting
+                    localStorage.setItem('userRole', result.role);
+
+                    successContainer.classList.remove('hidden');
+                    setTimeout(() => {
+                        window.location.href = "patient-dashboard.html"; // Skip login entirely!
+                    }, 1500);
+                } else {
+                    errorContainer.innerText = result.message;
+                    errorContainer.classList.remove('hidden');
+                    btn.innerText = "Verify Account";
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                errorContainer.innerText = "Server connection failed.";
+                errorContainer.classList.remove('hidden');
+                btn.innerText = "Verify Account";
+                btn.disabled = false;
+            }
+        }
+
+        function resetForm() {
+            clearInterval(resendTimerInterval); // clear timer if they hit back
+            const regView = document.getElementById('registerView');
+            const otpView = document.getElementById('otpView');
+            const btn = document.getElementById('regBtn');
+            
+            otpView.classList.replace('translate-x-0', 'translate-x-full');
+            otpView.classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => otpView.classList.add('hidden'), 300);
+
+            regView.classList.remove('hidden');
+            setTimeout(() => {
+                regView.classList.replace('-translate-x-full', 'translate-x-0');
+                regView.classList.replace('opacity-0', 'opacity-100');
+            }, 50);
+
+            btn.innerText = "Send Verification Code";
+            btn.disabled = false;
+            document.getElementById('otpCode').value = '';
+        }
+
+        function startResendTimer() {
+            const resendBtn = document.getElementById('resendBtn');
+            let timeLeft = 30;
+            
+            resendBtn.disabled = true;
+            resendBtn.className = "text-gray-400 font-bold disabled:cursor-not-allowed transition-colors";
+            resendBtn.innerHTML = `Resend in <span id="timerSpan">${timeLeft}</span>s`;
+
+            clearInterval(resendTimerInterval);
+            resendTimerInterval = setInterval(() => {
+                timeLeft--;
+                const timerSpan = document.getElementById('timerSpan');
+                if(timerSpan) timerSpan.innerText = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(resendTimerInterval);
+                    resendBtn.disabled = false;
+                    resendBtn.className = "text-form-teal font-bold hover:underline transition-colors cursor-pointer";
+                    resendBtn.innerHTML = "Resend Code";
+                }
+            }, 1000);
+        }
+
+        async function handleResendOTP() {
+            const btn = document.getElementById('resendBtn');
+            btn.innerHTML = "Sending...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/resend-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: registeredPhone })
+                });
+
+                if (response.ok) {
+                    startResendTimer(); // Start the 30s countdown again
+                } else {
+                    const result = await response.json();
+                    alert(result.message || "Failed to resend code.");
+                    startResendTimer(); 
+                }
+            } catch (error) {
+                alert("Network error. Could not resend.");
+                startResendTimer();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - Regional Opticians</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        // SAFETY VALVE 1: Role Guard
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('userRole');
+
+        if (!token || role !== 'patient') {
+            localStorage.clear(); 
+            window.location.href = "login.html";
+        }
+    </script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Enabled dark mode manually
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#2563eb', 
+                        'form-teal': '#0d9488', 
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script>
+        // Run immediately to prevent flash of light theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-slate-900 font-sans text-gray-800 dark:text-gray-200 min-h-screen flex flex-col relative transition-colors duration-300">
+
+    <nav class="bg-white dark:bg-slate-800 p-4 shadow-sm border-b border-gray-100 dark:border-slate-700 transition-colors duration-300">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded bg-primary-blue flex items-center justify-center font-bold text-white">RO</div>
+                <h1 class="text-xl font-bold text-primary-blue">Regional Opticians</h1>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-600 dark:text-gray-300 transition-colors shadow-inner flex items-center justify-center" aria-label="Toggle Dark Mode">
+                    <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    <svg class="w-5 h-5 hidden dark:block text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                </button>
+                
+                <a href="patient-dashboard.html" class="text-gray-600 dark:text-gray-300 hover:text-primary-blue dark:hover:text-primary-blue font-medium flex items-center gap-1 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    <span class="hidden sm:inline">Back to Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-12 flex-1 flex justify-center">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-8 w-full max-w-lg transition-colors duration-300">
+            
+            <div class="mb-8">
+                <h2 id="formTitle" class="text-3xl font-bold text-gray-900 dark:text-white transition-colors">Book Appointment</h2>
+                <p id="formSubtitle" class="text-gray-500 dark:text-gray-400 mt-2 transition-colors">Choose a convenient time for your eye examination.</p>
+            </div>
+
+            <form id="appointmentForm" class="space-y-6" onsubmit="handleBooking(event)">
+                
+                <div>
+                    <label class="block text-xs font-bold text-form-teal uppercase tracking-widest mb-3">
+                        Services Needed
+                    </label>
+                    <div id="servicesContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <p class="text-sm text-gray-400 italic">Loading services...</p>
+                    </div>
+                    <p id="serviceError" class="text-red-500 text-xs font-bold mt-2 hidden">Please select at least one service.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-form-teal uppercase tracking-widest mb-2">Preferred Date</label>
+                        <input type="date" id="appointmentDate" required onchange="checkAvailability()" class="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white [color-scheme:light] dark:[color-scheme:dark] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-form-teal uppercase tracking-widest mb-2">Select Doctor</label>
+                        <select id="doctorPref" required onchange="checkAvailability()" class="w-full border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-700 dark:text-white cursor-pointer appearance-none transition-colors">
+                            <option value="" disabled selected>Loading clinicians...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 dark:border-slate-700 pt-6 transition-colors">
+                    <label class="block text-xs font-bold text-form-teal uppercase tracking-widest mb-2 flex justify-between items-center">
+                        <span>Available Time Slots</span>
+                        <span id="availabilityStatus" class="text-[10px] text-primary-blue bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded animate-pulse hidden">Checking schedule...</span>
+                    </label>
+                    <select id="appointmentTime" required disabled class="w-full border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-slate-900/50 text-gray-400 dark:text-gray-500 cursor-not-allowed appearance-none transition-colors">
+                        <option value="" disabled selected>Select a Date & Doctor first...</option>
+                    </select>
+                    <p id="timeHelperText" class="text-xs text-red-500 font-medium mt-2 hidden">Not enough consecutive time slots available for selected services.</p>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-primary-blue hover:bg-blue-700 text-white font-semibold py-4 rounded-xl shadow-lg shadow-blue-100 dark:shadow-none transition duration-200 flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Confirm Appointment
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <div id="successModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full p-8 relative z-10 text-center border-t-4 border-amber-400 dark:border-amber-500 transition-colors duration-300">
+                
+                <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-amber-50 dark:bg-amber-900/20 mb-6 border border-amber-100 dark:border-amber-800 transition-colors">
+                    <svg class="h-10 w-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                
+                <h3 id="successModalTitle" class="text-2xl font-black text-gray-900 dark:text-white mb-2 transition-colors">Request Received</h3>
+                <p id="successModalMessage" class="text-slate-500 dark:text-gray-400 mb-8 font-medium leading-relaxed transition-colors">Your appointment has been received and is waiting approval.</p>
+                
+                <button onclick="window.location.href='patient-dashboard.html'" class="w-full py-4 bg-gray-900 dark:bg-slate-700 hover:bg-black dark:hover:bg-slate-600 text-white rounded-2xl font-bold transition-all shadow-lg">
+                    Return to Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Toggle Logic ---
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        const morningSlots = ["09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM"];
+        const afternoonSlots = ["02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM"];
+        const allTimeSlots = [...morningSlots, ...afternoonSlots];
+
+        let editId = null;
+        let preSelectedTime = null; 
+
+        async function fetchServices() {
+            try {
+                const response = await fetch('http://localhost:3000/api/services');
+                if (!response.ok) throw new Error("Failed to load services");
+                
+                const services = await response.json();
+                const container = document.getElementById('servicesContainer');
+                container.innerHTML = ''; 
+                
+                services.forEach(s => {
+                    container.innerHTML += `
+                        <label class="flex items-start p-3 border border-gray-200 dark:border-slate-600 rounded-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors">
+                            <input type="checkbox" onchange="checkAvailability()" name="serviceCheckbox" value="${s.name}" class="mt-0.5 w-4 h-4 text-primary-blue bg-gray-100 border-gray-300 rounded focus:ring-primary-blue">
+                            <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-200 leading-tight transition-colors">
+                                ${s.name} <br>
+                                <span class="text-xs text-primary-blue dark:text-blue-400 font-bold tracking-tight">Ksh ${s.price.toLocaleString()}</span>
+                            </span>
+                        </label>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error loading services:", error);
+                document.getElementById('servicesContainer').innerHTML = `<p class="text-red-500 text-sm">Failed to connect to hospital database.</p>`;
+            }
+        }
+
+        async function loadClinicians() {
+            const doctorDropdown = document.getElementById('doctorPref');
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/appointments/clinicians', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                if (response.ok) {
+                    const doctors = await response.json();
+                    doctorDropdown.innerHTML = '<option value="" disabled selected>Choose a clinician...</option>';
+
+                    doctors.forEach(doc => {
+                        const option = document.createElement('option');
+                        const cleanName = doc.fullName.replace(/^(Dr\.|Dr)\s+/i, ''); 
+                        const displayName = `Dr. ${cleanName}`;
+                        
+                        option.value = displayName; 
+                        option.textContent = displayName;
+                        doctorDropdown.appendChild(option);
+                    });
+                } else {
+                    doctorDropdown.innerHTML = '<option value="" disabled selected>Error loading doctors</option>';
+                }
+            } catch (error) {
+                doctorDropdown.innerHTML = '<option value="" disabled selected>Server offline</option>';
+            }
+        }
+
+        async function checkAvailability() {
+            const dateVal = document.getElementById('appointmentDate').value;
+            const doctorVal = document.getElementById('doctorPref').value;
+            const timeSelect = document.getElementById('appointmentTime');
+            const statusIndicator = document.getElementById('availabilityStatus');
+            const helperText = document.getElementById('timeHelperText');
+
+            const selectedCheckboxes = document.querySelectorAll('input[name="serviceCheckbox"]:checked');
+            const numServices = selectedCheckboxes.length > 0 ? selectedCheckboxes.length : 1;
+
+            const currentlySelectedTime = timeSelect.value;
+
+            // Updated this section to assign full class strings for dark mode compatibility
+            if (!dateVal || !doctorVal) {
+                timeSelect.innerHTML = '<option value="" disabled selected>Select a Date & Doctor first...</option>';
+                timeSelect.disabled = true;
+                timeSelect.className = "w-full border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-gray-50 dark:bg-slate-900/50 text-gray-400 dark:text-gray-500 cursor-not-allowed appearance-none transition-colors";
+                helperText.classList.add('hidden');
+                return;
+            }
+
+            statusIndicator.classList.remove('hidden');
+            timeSelect.innerHTML = '<option value="" disabled selected>Fetching available slots...</option>';
+            timeSelect.disabled = true;
+
+            try {
+                const excludeParam = editId ? `&excludeId=${editId}` : '';
+                const cacheBuster = new Date().getTime();
+                const response = await fetch(`http://localhost:3000/api/appointments/booked-times?date=${dateVal}&doctor=${encodeURIComponent(doctorVal)}${excludeParam}&_=${cacheBuster}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }, cache: 'no-store'
+                });
+
+                const bookedTimes = await response.json(); 
+
+                timeSelect.innerHTML = '<option value="" disabled selected>Select a start time...</option>';
+                let availableCount = 0;
+
+                allTimeSlots.forEach((slot, index) => {
+                    let isValid = true;
+                    const isMorning = morningSlots.includes(slot);
+
+                    for (let j = 0; j < numServices; j++) {
+                        const checkIndex = index + j;
+                        if (checkIndex >= allTimeSlots.length) { isValid = false; break; }
+                        const checkSlot = allTimeSlots[checkIndex];
+                        if (isMorning && !morningSlots.includes(checkSlot)) { isValid = false; break; }
+                        if (!isMorning && !afternoonSlots.includes(checkSlot)) { isValid = false; break; }
+                        if (bookedTimes.includes(checkSlot)) { isValid = false; break; }
+                    }
+
+                    const option = document.createElement('option');
+                    option.value = slot;
+
+                    if (!isValid) {
+                        option.textContent = `${slot} - Unavailable`;
+                        option.disabled = true;
+                        option.className = "text-red-400 font-bold bg-red-50 dark:bg-red-900/20";
+                    } else {
+                        option.textContent = slot; 
+                        option.className = "text-slate-700 dark:text-white font-bold bg-white dark:bg-slate-700";
+                        availableCount++;
+                    }
+                    timeSelect.appendChild(option);
+                });
+
+                timeSelect.disabled = false;
+                timeSelect.className = "w-full border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-700 text-slate-700 dark:text-white cursor-pointer appearance-none transition-colors";
+
+                if (currentlySelectedTime && Array.from(timeSelect.options).find(opt => opt.value === currentlySelectedTime && !opt.disabled)) {
+                    timeSelect.value = currentlySelectedTime;
+                } else if (preSelectedTime && Array.from(timeSelect.options).find(opt => opt.value === preSelectedTime && !opt.disabled)) {
+                    timeSelect.value = preSelectedTime;
+                }
+
+                if (availableCount === 0) {
+                    helperText.classList.remove('hidden');
+                } else {
+                    helperText.classList.add('hidden');
+                }
+
+            } catch (err) {
+                timeSelect.innerHTML = '<option value="" disabled selected>Error checking availability</option>';
+            } finally {
+                statusIndicator.classList.add('hidden');
+            }
+        }
+
+        async function initPage() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('appointmentDate').setAttribute('min', today);
+
+            await fetchServices();
+            await loadClinicians();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            editId = urlParams.get('edit'); 
+
+            if (editId) {
+                document.getElementById('formTitle').innerText = "Reschedule Appointment";
+                document.getElementById('formSubtitle').innerText = "Pick a new date and time for your visit.";
+                document.getElementById('submitBtn').innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Update Appointment`;
+                loadExistingAppointment(editId);
+            }
+        }
+
+        async function loadExistingAppointment(id) {
+            try {
+                const response = await fetch(`http://localhost:3000/api/appointments/${id}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const savedServices = data.service.split(', ');
+                    const checkboxes = document.querySelectorAll('input[name="serviceCheckbox"]');
+                    checkboxes.forEach(cb => {
+                        if (savedServices.includes(cb.value)) cb.checked = true;
+                    });
+
+                    document.getElementById('appointmentDate').value = data.date;
+                    document.getElementById('doctorPref').value = data.doctor;
+                    
+                    preSelectedTime = data.time; 
+                    checkAvailability();
+                }
+            } catch (err) { console.error("Load error:", err); }
+        }
+
+        async function handleBooking(event) {
+            event.preventDefault();
+
+            const selectedCheckboxes = document.querySelectorAll('input[name="serviceCheckbox"]:checked');
+            if (selectedCheckboxes.length === 0) {
+                document.getElementById('serviceError').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('serviceError').classList.add('hidden');
+
+            const mergedServices = Array.from(selectedCheckboxes).map(cb => cb.value).join(', ');
+            const token = localStorage.getItem('token');
+            
+            const bookingData = {
+                service: mergedServices,
+                date: document.getElementById('appointmentDate').value,
+                time: document.getElementById('appointmentTime').value,
+                doctor: document.getElementById('doctorPref').value
+            };
+
+            const url = editId ? `http://localhost:3000/api/appointments/${editId}` : 'http://localhost:3000/api/appointments/book';
+            const method = editId ? 'PUT' : 'POST';
+
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Processing...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Update Title
+                    document.getElementById('successModalTitle').innerText = editId ? "Update Received" : "Request Received";
+                    
+                    // Force the new exact message into the modal 
+                    document.getElementById('successModalMessage').innerText = "Your appointment has been received and is waiting approval.";
+                    
+                    document.getElementById('successModal').classList.remove('hidden');
+                } else {
+                    alert("Error: " + result.message);
+                }
+            } catch (error) {
+                alert("Could not connect to server. Check if the backend is running.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        initPage();
+    </script>
+</body>
+</html>

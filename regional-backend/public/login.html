@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regional Opticians - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        'primary-blue': '#2563eb',
+                        'bg-light': '#f4f9fd',
+                        'text-dark': '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-sans h-screen flex w-full overflow-hidden bg-bg-light">
+
+    <div class="relative hidden md:flex w-1/2 h-full items-center justify-center p-12 text-center">
+        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1579684385127-1ef15d508118?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80');"></div>
+        <div class="absolute inset-0 bg-blue-900/80 mix-blend-multiply"></div>
+        
+        <div class="relative z-10 text-white max-w-lg mt-10">
+            <h2 class="text-4xl lg:text-5xl font-bold tracking-tight mb-4 leading-tight">Clear Vision,<br>Better Life.</h2>
+            <p class="text-lg text-blue-100 font-light">Welcome back to the Regional Opticians Portal, Githurai.</p>
+        </div>
+    </div>
+
+    <div class="w-full md:w-1/2 h-full flex flex-col justify-center items-center p-6 sm:p-12 overflow-y-auto relative">
+        
+        <div class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sm:p-12 w-full max-w-[450px]">
+            
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-50 text-blue-500 mb-5">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-text-dark mb-2">Regional Opticians</h2>
+                <p class="text-gray-500 text-sm">Please sign in to your account</p>
+            </div>
+
+            <form class="space-y-5" onsubmit="handleLogin(event)">
+                
+                <div>
+                    <label class="block text-sm font-semibold text-text-dark mb-1.5">Phone Number</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 text-sm text-gray-600 bg-gray-100 border border-r-0 border-gray-200 rounded-l-lg font-bold">+254</span>
+                        <input type="text" id="loginPhone" name="phone" autocomplete="username" required maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="712345678" class="w-full border border-gray-200 rounded-r-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-text-dark mb-1.5">Password</label>
+                    <div class="relative">
+                        <input type="password" id="loginPass" name="password" autocomplete="current-password" required placeholder="••••••••" class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 pr-10">
+                        <button type="button" onclick="togglePassword('loginPass', 'eyeIconPass')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <svg id="eyeIconPass" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="flex justify-end mt-2">
+                        <button type="button" onclick="openForgotPasswordModal()" class="text-xs font-bold text-primary-blue hover:text-blue-700 transition-colors focus:outline-none">
+                            Forgot Password?
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-text-dark mb-1.5">Login As</label>
+                    <div class="relative">
+                        <select id="loginRole" class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-700 appearance-none bg-white">
+                            <option value="patient">Patient</option>
+                            <option value="clinician">Clinician</option>
+                            <option value="admin">Administrator</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <p id="loginError" class="text-red-500 text-[13px] text-center hidden font-semibold bg-red-50 p-2 rounded"></p>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-[#2563eb] hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-blue-100 uppercase tracking-wide">
+                        Sign In
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center mt-6">
+                <p class="text-sm text-gray-600">Don't have an account? <a href="register.html" class="text-primary-blue font-bold hover:underline">Register here</a></p>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center text-xs text-gray-400 max-w-xs">
+            <p>© 2026 Regional Opticians Hospital, Githurai.<br>All rights reserved.</p>
+        </div>
+    </div>
+
+    <div id="forgotPasswordModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onclick="closeForgotPasswordModal()"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 relative z-10">
+                <button type="button" onclick="closeForgotPasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <div class="text-center mb-6">
+                    <div class="mx-auto w-12 h-12 bg-blue-50 text-primary-blue rounded-full flex items-center justify-center mb-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-black text-gray-900 tracking-tight">Reset Password</h3>
+                    <p class="text-xs text-gray-500 mt-2 font-medium">Enter your registered phone number to receive a temporary login password via SMS.</p>
+                </div>
+
+                <form id="forgotPasswordForm" onsubmit="handlePasswordReset(event)">
+                    <div class="mb-5">
+                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Phone Number</label>
+                        <div class="flex shadow-sm">
+                            <span class="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-gray-200 bg-gray-50 text-gray-600 font-bold">+254</span>
+                            <input type="text" id="resetPhone" maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required class="flex-1 block w-full px-4 py-3 rounded-none rounded-r-lg bg-gray-50 border border-gray-200 text-sm font-bold focus:outline-none focus:border-primary-blue" placeholder="7XX XXX XXX">
+                        </div>
+                        <p id="resetMessage" class="text-xs font-bold mt-2 text-center hidden"></p>
+                    </div>
+
+                    <button type="submit" id="resetBtn" class="w-full bg-primary-blue hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-all text-xs uppercase tracking-widest flex justify-center items-center gap-2">
+                        Send Reset SMS
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />';
+            } else {
+                input.type = 'password';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />';
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault(); 
+            const rawPhone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPass').value;
+            const selectedRole = document.getElementById('loginRole').value; 
+            const errorContainer = document.getElementById('loginError');
+            
+            errorContainer.classList.add('hidden'); 
+
+            if (rawPhone.length !== 9) {
+                errorContainer.innerText = "Please enter the 9 digits after the +254 prefix.";
+                errorContainer.classList.remove('hidden');
+                return;
+            }
+
+            const formattedPhone = '+254' + rawPhone;
+            const loginData = { phone: formattedPhone, password: password, role: selectedRole };
+
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(loginData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    /** * CLEAN SLATE PROTOCOL:
+                     * Wipe out any existing data before saving the new user's session.
+                     */
+                    localStorage.clear();
+
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('userName', result.fullName);
+                    localStorage.setItem('userRole', result.role);
+                    localStorage.setItem('userPhone', formattedPhone); // Storing phone for future use
+
+                    // Redirect based on the role stored in the token/database
+                    if (result.role === 'clinician') {
+                        window.location.href = "clinician-dashboard.html";
+                    } else if (result.role === 'admin') {
+                        window.location.href = "admin-dashboard.html";
+                    } else {
+                        window.location.href = "patient-dashboard.html";
+                    }
+                } else {
+                    errorContainer.innerText = result.message;
+                    errorContainer.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorContainer.innerText = "Failed to connect to server.";
+                errorContainer.classList.remove('hidden');
+            }
+        }
+
+        // --- PASSWORD RECOVERY LOGIC ---
+        function openForgotPasswordModal() {
+            document.getElementById('resetMessage').classList.add('hidden');
+            document.getElementById('resetPhone').value = '';
+            document.getElementById('forgotPasswordModal').classList.remove('hidden');
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').classList.add('hidden');
+        }
+
+        async function handlePasswordReset(e) {
+            e.preventDefault();
+            
+            const phoneInput = document.getElementById('resetPhone').value;
+            const btn = document.getElementById('resetBtn');
+            const msgLabel = document.getElementById('resetMessage');
+            
+            if (phoneInput.length !== 9) {
+                msgLabel.innerText = "Please enter exactly 9 digits.";
+                msgLabel.className = "text-xs font-bold mt-2 text-center text-red-500 block";
+                return;
+            }
+
+            const finalPhone = `+254${phoneInput}`;
+            
+            btn.innerHTML = "Sending SMS...";
+            btn.disabled = true;
+            msgLabel.classList.add('hidden');
+
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: finalPhone })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    msgLabel.innerText = "Success! Check your messages for your new password.";
+                    msgLabel.className = "text-xs font-bold mt-2 text-center text-green-600 block";
+                    
+                    setTimeout(() => {
+                        closeForgotPasswordModal();
+                    }, 3000);
+                } else {
+                    msgLabel.innerText = data.message || "Failed to reset password.";
+                    msgLabel.className = "text-xs font-bold mt-2 text-center text-red-500 block";
+                }
+            } catch (error) {
+                msgLabel.innerText = "Network Error. Could not connect to server.";
+                msgLabel.className = "text-xs font-bold mt-2 text-center text-red-500 block";
+            } finally {
+                btn.innerHTML = "Send Reset SMS";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
